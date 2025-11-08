@@ -1,5 +1,6 @@
-const { createAuthenticatedClient } = require('@interledger/open-payments');
+const { createAuthenticatedClient, OpenPaymentsClientError, isFinalizedGrant } = require('@interledger/open-payments');
 const path = require('path');
+const User = require('../models/User');
 
 let clientInstance = null;
 
@@ -7,12 +8,13 @@ let clientInstance = null;
  * Get or create authenticated Interledger Open Payments client
  * @returns {Promise<import('@interledger/open-payments').AuthenticatedClient>}
  */
-async function getInterledgerClient() {
+async function getInterledgerClient(userId) {
   if (clientInstance) return clientInstance;
+  const user = await User.findById(userId);
 
-  const privateKeyPath = process.env.ILP_PRIVATE_KEY_PATH || path.join(__dirname, '..', 'private.key');
-  const keyId = process.env.ILP_KEY_ID;
-  const walletAddressUrl = process.env.ILP_WALLET_ADDRESS_URL;
+  const privateKeyPath = user.ilp_private_key_path;
+  const keyId = user.ilp_key_id;
+  const walletAddressUrl = user.wallet_address_url;
 
   if (!keyId || !walletAddressUrl) {
     throw new Error('ILP_KEY_ID and ILP_WALLET_ADDRESS_URL must be set in environment variables');
