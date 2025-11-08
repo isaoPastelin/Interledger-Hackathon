@@ -25,6 +25,11 @@
           <span class="amount"><%= wallet.balance.toFixed(2) %></span>
         </div>
         <p class="wallet-id">Wallet ID: <%= wallet.id %></p>
+        <% if (wallet.wallet_address_url) { %>
+          <p class="wallet-address"><strong>Wallet Address URL:</strong> <code><%= wallet.wallet_address_url %></code></p>
+        <% } else { %>
+          <p class="text-muted">No wallet address URL configured yet. Register a wallet to enable ILP payments.</p>
+        <% } %>
       </div>
 
       <!-- Child Accounts -->
@@ -43,6 +48,15 @@
                 <div class="child-balance">
                   Balance: $<%= child.wallet.balance.toFixed(2) %>
                 </div>
+                <% if (child.wallet && child.wallet.wallet_address_url) { %>
+                  <div class="child-wallet-address">
+                    <small>Address:</small> <code><%= child.wallet.wallet_address_url %></code>
+                  </div>
+                <% } else { %>
+                  <div class="child-wallet-address text-muted">
+                    <small>No wallet address set</small>
+                  </div>
+                <% } %>
               </div>
             <% }); %>
           </div>

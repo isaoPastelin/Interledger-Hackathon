@@ -1,9 +1,13 @@
 const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
+const multer = require('multer');
+const path = require('path');
+const fs = require('fs');
 
 let Wallet;
 try { Wallet = require('../models/Wallet'); } catch (e) { console.warn('Wallet model unavailable', e.message); }
+
 const { sendVerificationEmail, generateEmailVerificationToken } = require('../services/sendVerificationEmail');
 
 
@@ -12,12 +16,15 @@ router.get('/register', (req, res) => {
 });
 
 // Handle registration
-router.post('/register', async (req, res) => {
+// Multer setup for single private key upload in memory
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 64 * 1024 } });
+
+router.post('/register', upload.single('ilp_private_key'), async (req, res) => {
   try {
-    const { email, password, account_type, parent_email, full_name, date_of_birth, address, phone, id_number } = req.body;
+    const { email, password, account_type, parent_email, full_name, date_of_birth, address, phone, ilp_key_id, walletAddressUrl } = req.body;
 
     // Validate required fields
-    if (!email || !password || !account_type || !full_name || !date_of_birth || !address || !phone || !id_number) {
+    if (!email || !password || !account_type || !full_name || !date_of_birth || !address || !phone || !ilp_key_id || !walletAddressUrl) {
       return res.status(400).render('register', { error: 'All fields are required for KYC verification' });
     }
 
@@ -52,8 +59,7 @@ router.post('/register', async (req, res) => {
       full_name,
       date_of_birth,
       address,
-      phone,
-      id_number
+      phone
     });
 
     // Generate email verification token & save
@@ -63,23 +69,43 @@ router.post('/register', async (req, res) => {
     // Fire off email (non-blocking but awaited here for simplicity)
     await sendVerificationEmail({ id: userId, email }, token);
 
-    // Create wallet entry (user must configure wallet_address_url separately)
-    // For demo: you can auto-generate wallet addresses or require manual setup
-    if (Wallet && Wallet.create) {
+    // Determine wallet address source: explicit form field, env override, or auto-base
+    let resolvedWalletAddressUrl = null;
+    if (walletAddressUrl && walletAddressUrl.trim()) {
+      resolvedWalletAddressUrl = walletAddressUrl.trim();
+    } else if (process.env.CLIENT_WALLET_ADDRESS_URL) {
+      resolvedWalletAddressUrl = process.env.CLIENT_WALLET_ADDRESS_URL.trim();
+    } else if (process.env.ILP_BASE_WALLET_URL) {
+      // Fallback auto generation using base + userId (demo purpose)
+      resolvedWalletAddressUrl = `${process.env.ILP_BASE_WALLET_URL.replace(/\/$/, '')}/${userId}`;
+    }
+
+    if (Wallet && Wallet.create && resolvedWalletAddressUrl) {
       try {
-        // Placeholder: In production, integrate with your ILP provider to create/assign wallet addresses
-        const walletAddressUrl = process.env.ILP_BASE_WALLET_URL 
-          ? `${process.env.ILP_BASE_WALLET_URL}/${userId}`
-          : null;
-        
-        if (walletAddressUrl) {
-          await Wallet.create(userId, walletAddressUrl);
-          await User.setWalletAddress(userId, walletAddressUrl);
-        } else {
-          console.warn('ILP_BASE_WALLET_URL not set; wallet address not created');
-        }
+        await Wallet.create(userId, resolvedWalletAddressUrl);
+        await User.setWalletAddress(userId, resolvedWalletAddressUrl);
       } catch (walletErr) {
         console.warn('Wallet creation warning:', walletErr.message);
+      }
+    } else if (!resolvedWalletAddressUrl) {
+      console.warn('No wallet address URL provided or derivable; user will need to set it later.');
+    }
+
+    // Handle ILP key ID and private key file
+    if (ilp_key_id || req.file) {
+      const updates = {};
+      if (ilp_key_id) updates.ilp_key_id = ilp_key_id.trim();
+      if (req.file) {
+        // Persist private key securely under /secrets/ directory (ensure gitignore)
+        const secretsDir = path.join(__dirname, '..', 'secrets');
+        if (!fs.existsSync(secretsDir)) fs.mkdirSync(secretsDir);
+        const keyFilename = `private_${userId}.key`;
+        const keyPath = path.join(secretsDir, keyFilename);
+        fs.writeFileSync(keyPath, req.file.buffer.toString('utf8'), { encoding: 'utf8', flag: 'w' });
+        updates.ilp_private_key_path = keyPath;
+      }
+      if (Object.keys(updates).length) {
+        await User.collection().doc(userId).update(updates);
       }
     }
 

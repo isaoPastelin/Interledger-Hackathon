@@ -17,13 +17,27 @@ router.get('/', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(404).send('User not found');
-    const wallet = await Wallet.findByUserId(user.id);
-    const transactions = wallet ? await Transaction.getByWalletId(wallet.id) : [];
+    // Ensure we always pass a wallet object with a numeric balance to the views
+    let wallet = await Wallet.findByUserId(user.id);
+    if (!wallet) {
+      wallet = { id: null, wallet_address_url: null, balance: 0 };
+    } else {
+      const bal = await Wallet.getBalance(wallet.id);
+      wallet.balance = typeof bal === 'number' ? bal : 0;
+    }
+
+    const transactions = wallet.id ? await Transaction.getByWalletId(wallet.id) : [];
 
     if (user.account_type === 'father') {
       const children = await User.getChildren(user.id);
       const childrenWithWallets = await Promise.all(children.map(async child => {
-        const childWallet = await Wallet.findByUserId(child.id);
+        let childWallet = await Wallet.findByUserId(child.id);
+        if (!childWallet) {
+          childWallet = { id: null, wallet_address_url: null, balance: 0 };
+        } else {
+          const cb = await Wallet.getBalance(childWallet.id);
+          childWallet.balance = typeof cb === 'number' ? cb : 0;
+        }
         return { ...child, wallet: childWallet };
       }));
 
