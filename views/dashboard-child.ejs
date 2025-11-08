@@ -25,6 +25,11 @@
           <span class="amount"><%= wallet.balance.toFixed(2) %></span>
         </div>
         <p class="wallet-id">Wallet ID: <%= wallet.id %></p>
+        <% if (wallet.wallet_address_url) { %>
+          <p class="wallet-address"><strong>Wallet Address URL:</strong> <code><%= wallet.wallet_address_url %></code></p>
+        <% } else { %>
+          <p class="text-muted">No wallet address URL configured yet. Ask your parent to set it up.</p>
+        <% } %>
         <% if (parent) { %>
           <p class="text-muted">Managed by: <%= parent.full_name %> (<%= parent.email %>)</p>
         <% } %>

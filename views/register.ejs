@@ -16,7 +16,7 @@
         <div class="error-message"><%= error %></div>
       <% } %>
 
-      <form action="/auth/register" method="POST">
+  <form action="/auth/register" method="POST" enctype="multipart/form-data">
         <div class="form-section">
           <h3>Account Information</h3>
           
@@ -73,6 +73,28 @@
           <div class="form-group">
             <label for="address">Address:</label>
             <textarea id="address" name="address" rows="3" required></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Wallet Credentials</h3>
+
+          <div class="form-group">
+            <label for="walletAddressUrl">ILP Wallet Address URL:</label>
+            <input type="text" id="walletAddressUrl" name="walletAddressUrl" placeholder="Enter your wallet address URL">
+            <small>Provided by your Interledger wallet URL.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="ilp_key_id">ILP Key ID:</label>
+            <input type="text" id="ilp_key_id" name="ilp_key_id" placeholder="Enter your wallet Key ID">
+            <small>Provided by your Interledger wallet provider when you register your public key.</small>
+          </div>
+
+          <div class="form-group">
+            <label for="ilp_private_key">ILP Private Key (PEM):</label>
+            <input type="file" id="ilp_private_key" name="ilp_private_key" accept=".pem,.key,.txt">
+            <small>Upload the private key file that matches your registered public key. Keep this file safe.</small>
           </div>
         </div>
 

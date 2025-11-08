@@ -18,13 +18,15 @@ class User {
       date_of_birth: userData.date_of_birth,
       address: userData.address,
       phone: userData.phone,
-      id_number: userData.id_number,
       kyc_verified: 0,
       email_verified: false,
       email_verification_token: null,
       email_verification_expires: null,
       // Interledger wallet address (to be set after wallet creation)
       wallet_address_url: null,
+      // Optional per-user ILP credentials
+      ilp_key_id: null,
+      ilp_private_key_path: null,
       created_at: FieldValue.serverTimestamp(),
     };
 
@@ -43,6 +45,15 @@ class User {
       email_verification_token: token,
       email_verification_expires: expires,
     });
+  }
+
+  static async setIlpCredentials(userId, keyId, privateKeyPath) {
+    const updates = {};
+    if (keyId) updates.ilp_key_id = keyId;
+    if (privateKeyPath) updates.ilp_private_key_path = privateKeyPath;
+    if (Object.keys(updates).length) {
+      await this.collection().doc(userId).update(updates);
+    }
   }
 
   static async verifyEmailByToken(token) {

@@ -6,3 +6,4 @@ database.db
 firebase_conn.json
 private.key
 public.key
+secrets/
