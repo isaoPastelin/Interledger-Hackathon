@@ -1,176 +1,285 @@
-const { db } = require('../db/firebase');
-const { FieldValue } = require('firebase-admin/firestore');
-const Wallet = require('./Wallet');
-const { createClientForCredentials } = require('../services/interledgerClient');
-const { isFinalizedGrant, OpenPaymentsClientError } = require('@interledger/open-payments');
-const User = require('./User');
+// const Wallet = require('./Wallets');
+// const User = require('./User');
+// const { db } = require('../db/firebase');
+// const { FieldValue } = require('firebase-admin/firestore');
+// const crypto = require('crypto');
 
-class Transaction {
-  static collection() {
-    return db.collection('transactions');
-  }
 
-  /**
-   * Create a transaction using Interledger Open Payments
-   */
-  static async create(fromWalletId, toWalletId, amount, description) {
-    if (amount <= 0) throw new Error('Amount must be positive');
+// /**
+//  * Transaction helper that queries the Open Payments provider for a user's
+//  * incoming and outgoing payments and exposes helpers to get balance info.
+//  *
+//  * Methods:
+//  * - listOutgoing(userId, { cursor, limit })
+//  * - listIncoming(userId, { cursor, limit })
+//  * - listAll(userId, options)  // returns { incoming, outgoing }
+//  * - getBalance(userId)       // attempts to read balance/asset info from walletAddress
+//  */
+// class Transactions {
+// 	static async getClientAndAddress(userId) {
+// 		const walletUrl = await User.getWalletAddress(userId);
+// 		if (!walletUrl) throw new Error(`User ${userId} has no wallet_address_url set`);
 
-    const fromWallet = await Wallet.findByUserId(fromWalletId);
-    const toWallet = await Wallet.findByUserId(toWalletId);
+// 		const client = await Wallet.create(userId);
+// 		let walletAddress;
+// 		try {
+// 			walletAddress = await client.walletAddress.get({ url: walletUrl });
+// 		} catch (err) {
+// 			console.error('Error fetching walletAddress from provider for', { userId, walletUrl, err: err.message });
+// 			throw new Error(`Failed to fetch walletAddress for user ${userId}: ${err.message}`);
+// 		}
 
-    if (!fromWallet || !toWallet) {
-      throw new Error('Wallet not found');
-    }
+// 		// Validate provider response contains the endpoints we need
+// 		if (!walletAddress || !walletAddress.authServer || !walletAddress.resourceServer) {
+// 			console.error('Invalid walletAddress response', { userId, walletUrl, walletAddress });
+// 			throw new Error(`Invalid walletAddress response for user ${userId}; missing authServer or resourceServer`);
+// 		}
 
-    if (!fromWallet.wallet_address_url || !toWallet.wallet_address_url) {
-      throw new Error('Wallet addresses not configured for ILP payments');
-    }
+// 		return { client, walletAddress, walletUrl };
+// 	}
 
-    try {
-      const fromUser = await User.findById(fromWalletId);
-      const toUser = await User.findById(toWalletId);
+// 	static async listOutgoing(userId, opts = {}) {
+// 		// const { client, walletAddress } = await this.getClientAndAddress(userId);
+// 		// const { cursor, limit } = opts;
 
-      const senderKeyId = fromUser?.ilp_key_id || process.env.ILP_KEY_ID;
-      const senderKeyPath = fromUser?.ilp_private_key_path || process.env.ILP_PRIVATE_KEY_PATH || undefined;
-      const senderWalletUrl = fromWallet.wallet_address_url || process.env.ILP_WALLET_ADDRESS_URL;
+// 		// // Request a grant with list-all permission for outgoing-payment
+// 		// const outgoingPaymentListGrant = await client.grant.request(
+// 		// 	{ url: walletAddress.authServer },
+// 		// 	{
+// 		// 		access_token: {
+// 		// 			access: [
+// 		// 				{
+// 		// 					type: 'outgoing-payment',
+// 		// 					actions: ['read', 'list-all']
+// 		// 				}
+// 		// 			]
+// 		// 		}
+// 		// 	}
+// 		// );
 
-      const receiverKeyId = toUser?.ilp_key_id || process.env.ILP_KEY_ID;
-      const receiverKeyPath = toUser?.ilp_private_key_path || process.env.ILP_PRIVATE_KEY_PATH || undefined;
-      const receiverWalletUrl = toWallet.wallet_address_url || process.env.ILP_WALLET_ADDRESS_URL;
+// 		// const listParams = {
+// 		// 	url: walletAddress.resourceServer,
+// 		// 	accessToken: outgoingPaymentListGrant.access_token.value,
+// 		// 	walletAddress: walletAddress.id
+// 		// };
+// 		// if (cursor) listParams.cursor = cursor;
+// 		// if (limit) listParams.limit = limit;
 
-      // Validate key files if paths provided
-      const fs = require('fs');
-      if (receiverKeyPath && !fs.existsSync(receiverKeyPath)) {
-        throw new Error(`Receiver private key file not found at path: ${receiverKeyPath}`);
-      }
+// 		// const outgoingPayments = await client.outgoingPayment.list(listParams);
 
-      console.log('Creating receiver ILP client', { receiverWalletUrl, receiverKeyId, receiverKeyPath });
-      const receiverClient = await createClientForCredentials({ walletAddressUrl: receiverWalletUrl, keyId: receiverKeyId, privateKeyPath: receiverKeyPath });
+// 		// // Persist fetched outgoing payments for audit/queries
+// 		// try {
+// 		// 	if (outgoingPayments && outgoingPayments.data && outgoingPayments.data.length) {
+// 		// 		await this._persistTransactions(userId, outgoingPayments.data, 'outgoing');
+// 		// 	}
+// 		// } catch (err) {
+// 		// 	console.error('Error persisting outgoing payments:', err.message || err);
+// 		// }
+//     const outgoingPayments = 1
+// 		return outgoingPayments;
+// 	}
 
-      const receiverWalletAddress = await receiverClient.walletAddress.get({ url: receiverWalletUrl });
-      const incomingGrant = await receiverClient.grant.request(
-        { url: receiverWalletAddress.authServer },
-        { access_token: { access: [ { type: 'incoming-payment', actions: ['read', 'complete', 'create'] } ] } }
-      );
+// 	// static async listIncoming(userId, opts = {}) {
+// 	// 	const { client, walletAddress } = await this.getClientAndAddress(userId);
+// 	// 	const { cursor, limit } = opts;
 
-      if (!isFinalizedGrant(incomingGrant)) throw new Error('Failed to get incoming payment grant');
+// 	// 	// Request a grant with list-all permission for incoming-payment if supported.
+// 	// 	const incomingPaymentListGrant = await client.grant.request(
+// 	// 		{ url: walletAddress.authServer },
+// 	// 		{
+// 	// 			access_token: {
+// 	// 				access: [
+// 	// 					{
+// 	// 						type: 'incoming-payment',
+// 	// 						actions: ['read', 'list-all']
+// 	// 					}
+// 	// 				]
+// 	// 			}
+// 	// 		}
+// 	// 	);
 
-      // Create incoming payment (tolerate validation errors by accepting response body)
-      let incomingPayment;
-      try {
-        incomingPayment = await receiverClient.incomingPayment.create(
-          { url: receiverWalletAddress.resourceServer, accessToken: incomingGrant.access_token.value },
-          { walletAddress: receiverWalletAddress.id, incomingAmount: { assetCode: receiverWalletAddress.assetCode, assetScale: receiverWalletAddress.assetScale, value: amount.toString() } }
-        );
-      } catch (err) {
-        if (err instanceof OpenPaymentsClientError && err.response && err.response.data) {
-          console.warn('incomingPayment validation failed but response body present - accepting response data');
-          incomingPayment = err.response.data;
-        } else {
-          throw err;
-        }
-      }
+// 	// 	const listParams = {
+// 	// 		url: walletAddress.resourceServer,
+// 	// 		accessToken: incomingPaymentListGrant.access_token.value,
+// 	// 		walletAddress: walletAddress.id
+// 	// 	};
+// 	// 	if (cursor) listParams.cursor = cursor;
+// 	// 	if (limit) listParams.limit = limit;
 
-      // Sender client and quote
-      if (senderKeyPath && !require('fs').existsSync(senderKeyPath)) {
-        throw new Error(`Sender private key file not found at path: ${senderKeyPath}`);
-      }
-      console.log('Creating sender ILP client', { senderWalletUrl, senderKeyId, senderKeyPath });
-      const senderClient = await createClientForCredentials({ walletAddressUrl: senderWalletUrl, keyId: senderKeyId, privateKeyPath: senderKeyPath });
+// 	// 	const incomingPayments = await client.incomingPayment.list(listParams);
 
-      const senderWalletAddress = await senderClient.walletAddress.get({ url: senderWalletUrl });
+// 	// 	// Persist fetched incoming payments for audit/queries
+// 	// 	try {
+// 	// 		if (incomingPayments && incomingPayments.data && incomingPayments.data.length) {
+// 	// 			await this._persistTransactions(userId, incomingPayments.data, 'incoming');
+// 	// 		}
+// 	// 	} catch (err) {
+// 	// 		console.error('Error persisting incoming payments:', err.message || err);
+// 	// 	}
 
-      const quoteGrant = await senderClient.grant.request(
-        { url: senderWalletAddress.authServer },
-        { access_token: { access: [ { type: 'quote', actions: ['create', 'read'] } ] } }
-      );
+// 	// 	return incomingPayments;
+// 	// }
 
-      if (!isFinalizedGrant(quoteGrant)) throw new Error('Failed to get quote grant');
+// 	// static async listAll(userId, opts = {}) {
+// 	// 	// Parallelize incoming/outgoing where possible
+// 	// 	const [incoming, outgoing] = await Promise.all([
+// 	// 		this.listIncoming(userId, opts).catch(err => {
+// 	// 			console.error('Error listing incoming payments:', err.message || err);
+// 	// 			return { data: [], pagination: null };
+// 	// 		}),
+// 	// 		this.listOutgoing(userId, opts).catch(err => {
+// 	// 			console.error('Error listing outgoing payments:', err.message || err);
+// 	// 			return { data: [], pagination: null };
+// 	// 		})
+// 	// 	]);
 
-      const quote = await senderClient.quote.create(
-        { url: senderWalletAddress.resourceServer, accessToken: quoteGrant.access_token.value },
-        { walletAddress: senderWalletAddress.id, receiver: incomingPayment.id, method: 'ilp' }
-      );
+// 	// 	return { incoming, outgoing };
+// 	// }
 
-      const outgoingGrant = await senderClient.grant.request(
-        { url: senderWalletAddress.authServer },
-        { access_token: { access: [ { type: 'outgoing-payment', actions: ['read', 'create'], limits: { debitAmount: quote.debitAmount }, identifier: senderWalletAddress.id } ] }, interact: { start: ['redirect'] } }
-      );
+// 	// static async getBalance(userId) {
+// 	// 	const { walletAddress } = await this.getClientAndAddress(userId);
 
-      const txRef = this.collection().doc();
-      await txRef.set({
-        from_wallet_id: fromWalletId,
-        to_wallet_id: toWalletId,
-        amount,
-        description: description || '',
-        status: 'pending_grant',
-        incoming_payment_id: incomingPayment.id,
-        quote_id: quote.id,
-        grant_continue_uri: outgoingGrant.continue?.uri,
-        grant_continue_token: outgoingGrant.continue?.access_token?.value,
-        grant_interact_url: outgoingGrant.interact?.redirect,
-        created_at: FieldValue.serverTimestamp(),
-      });
+// 	// 	// Many Open Payments providers include asset info on the wallet address.
+// 	// 	// Some may include a balance field; if not available, return asset info
+// 	// 	// and null balance so caller can decide how to compute/derive it.
+// 	// 	const asset = {
+// 	// 		assetCode: walletAddress.assetCode,
+// 	// 		assetScale: walletAddress.assetScale
+// 	// 	};
 
-      return { success: false, requiresInteraction: true, interactUrl: outgoingGrant.interact.redirect, transactionId: txRef.id, message: 'Please authorize the payment by visiting the provided URL' };
-    } catch (err) {
-      console.error('ILP transaction error:', err);
-      if (err.response) {
-        try { console.error('Open Payments response data:', err.response.data || err.response); } catch (e) { console.error('Error printing response', e); }
-      }
-      throw new Error(`Payment failed: ${err.message}`);
-    }
-  }
+// 	// 	// Try common places for balance (may not be present depending on provider)
+// 	// 	const balance = walletAddress.balance ?? walletAddress.availableBalance ?? null;
 
-  static async completePendingTransaction(transactionId) {
-    const txDoc = await this.collection().doc(transactionId).get();
-    if (!txDoc.exists) throw new Error('Transaction not found');
+// 	// 	return { asset, balance, raw: walletAddress };
+// 	// }
 
-    const txData = txDoc.data();
-    if (txData.status !== 'pending_grant') throw new Error('Transaction is not pending grant approval');
+// 	// /**
+// 	//  * Persist an array of transaction-like objects to Firestore under collection `transactions`.
+// 	//  * Uses each item's `id` when available to upsert, otherwise generates a document.
+// 	//  */
+// 	// static async _persistTransactions(userId, items = [], direction = 'incoming') {
+// 	// 	if (!Array.isArray(items) || items.length === 0) return;
+// 	// 	const batch = db.batch();
+// 	// 	for (const item of items) {
+// 	// 		const txId = item.id || `${direction}_${item.reference || crypto?.randomUUID?.() || Date.now()}`;
+// 	// 		const ref = db.collection('transactions').doc(txId.toString());
 
-    try {
-      const fromWallet = await Wallet.findByUserId(txData.from_wallet_id);
-      const fromUser = await User.findById(txData.from_wallet_id);
-      const senderKeyId = fromUser?.ilp_key_id || process.env.ILP_KEY_ID;
-      const senderKeyPath = fromUser?.ilp_private_key_path || process.env.ILP_PRIVATE_KEY_PATH || undefined;
-      const senderWalletUrl = fromWallet.wallet_address_url || process.env.ILP_WALLET_ADDRESS_URL;
+// 	// 		// Extract common fields if present
+// 	// 		const status = item.status || item.state || null;
+// 	// 		const incomingAmount = item.incomingAmount || item.incoming_amount || null;
+// 	// 		const debitAmount = item.debitAmount || item.debit_amount || null;
+// 	// 		const amountObj = incomingAmount || debitAmount || item.amount || null;
+// 	// 		const amountValue = amountObj ? (amountObj.value ?? amountObj.amount ?? null) : null;
+// 	// 		const assetCode = amountObj ? (amountObj.assetCode || amountObj.currency || null) : null;
+// 	// 		const assetScale = amountObj ? (amountObj.assetScale || null) : null;
 
-      const senderClient = await createClientForCredentials({ walletAddressUrl: senderWalletUrl, keyId: senderKeyId, privateKeyPath: senderKeyPath });
+// 	// 		const doc = {
+// 	// 			userId,
+// 	// 			direction,
+// 	// 			transactionId: item.id || null,
+// 	// 			status,
+// 	// 			amountRaw: amountValue ? amountValue.toString() : null,
+// 	// 			assetCode,
+// 	// 			assetScale,
+// 	// 			raw: item,
+// 	// 			updatedAt: FieldValue.serverTimestamp(),
+// 	// 		};
 
-      const finalizedGrant = await senderClient.grant.continue({ url: txData.grant_continue_uri, accessToken: txData.grant_continue_token });
-      if (!isFinalizedGrant(finalizedGrant)) throw new Error('Grant not approved');
+// 	// 		batch.set(ref, doc, { merge: true });
+// 	// 	}
+// 	// 	await batch.commit();
+// 	// }
 
-      const senderWalletAddress = await senderClient.walletAddress.get({ url: senderWalletUrl });
+// 	// /**
+// 	//  * Compute balance from persisted transactions when provider doesn't expose balance.
+// 	//  * Returns { asset: {assetCode, assetScale}, balance: { atomic: BigInt, human: string } }
+// 	//  */
+// 	// static async getComputedBalance(userId) {
+// 	// 	// Attempt to use provider-exposed balance first
+// 	// 	const prov = await this.getBalance(userId);
+// 	// 	if (prov && prov.balance !== null && prov.balance !== undefined) {
+// 	// 		return { source: 'provider', asset: prov.asset, balance: prov.balance };
+// 	// 	}
 
-      const outgoingPayment = await senderClient.outgoingPayment.create(
-        { url: senderWalletAddress.resourceServer, accessToken: finalizedGrant.access_token.value },
-        { walletAddress: senderWalletAddress.id, quoteId: txData.quote_id }
-      );
+// 	// 	// Otherwise aggregate persisted transactions
+// 	// 	const snap = await db.collection('transactions').where('userId', '==', userId).get();
+// 	// 	if (snap.empty) return { source: 'computed', asset: null, balance: null };
 
-      await txDoc.ref.update({ status: 'completed', outgoing_payment_id: outgoingPayment.id, completed_at: FieldValue.serverTimestamp() });
-      return true;
-    } catch (err) {
-      await txDoc.ref.update({ status: 'failed', error_message: err.message });
-      throw err;
-    }
-  }
+// 	// 	let assetCode = null;
+// 	// 	let assetScale = null;
+// 	// 	let incomingSum = 0n;
+// 	// 	let outgoingSum = 0n;
 
-  static async getByWalletId(walletId) {
-    const fromSnap = await this.collection().where('from_wallet_id', '==', walletId).orderBy('created_at', 'desc').get();
-    const toSnap = await this.collection().where('to_wallet_id', '==', walletId).orderBy('created_at', 'desc').get();
-    const items = [];
-    fromSnap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    toSnap.forEach(d => items.push({ id: d.id, ...d.data() }));
-    items.sort((a, b) => { const at = a.created_at?.toMillis?.() || 0; const bt = b.created_at?.toMillis?.() || 0; return bt - at; });
-    return items;
-  }
+// 	// 	for (const d of snap.docs) {
+// 	// 		const t = d.data();
+// 	// 		if (!assetCode && t.assetCode) assetCode = t.assetCode;
+// 	// 		if (!assetScale && t.assetScale !== undefined && t.assetScale !== null) assetScale = t.assetScale;
+// 	// 		const v = t.amountRaw ? BigInt(t.amountRaw.toString()) : null;
+// 	// 		if (v !== null) {
+// 	// 			if (t.direction === 'incoming') incomingSum += v;
+// 	// 			else outgoingSum += v;
+// 	// 		}
+// 	// 	}
 
-  static async getAll() {
-    const snap = await this.collection().orderBy('created_at', 'desc').get();
-    return snap.docs.map(d => ({ id: d.id, ...d.data() }));
-  }
-}
+// 	// 	const atomic = incomingSum - outgoingSum;
+// 	// 	let human = null;
+// 	// 	try {
+// 	// 		if (assetScale != null) {
+// 	// 			const scale = BigInt(10) ** BigInt(assetScale);
+// 	// 			// Convert to decimal string with scale
+// 	// 			const intPart = atomic / scale;
+// 	// 			const fracPart = (atomic < 0n ? -atomic : atomic) % scale;
+// 	// 			const fracStr = fracPart.toString().padStart(Number(assetScale), '0');
+// 	// 			human = `${intPart.toString()}.${fracStr}`;
+// 	// 		}
+// 	// 	} catch (err) {
+// 	// 		human = atomic.toString();
+// 	// 	}
 
-module.exports = Transaction;
+// 	// 	return { source: 'computed', asset: { assetCode, assetScale }, balance: { atomic, human } };
+// 	// }
+    
+// 	// Fast Firestore-only aggregation for dashboard use. Does not call provider.
+// 	// Returns { asset: {assetCode, assetScale}, balanceHuman: string|null, balanceAtomic: BigInt|null }
+// 	static async getCachedBalance(userId) {
+// 		const snap = await db.collection('transactions').where('userId', '==', userId).get();
+// 		if (snap.empty) return { asset: null, balanceHuman: null, balanceAtomic: null };
+
+// 		let assetCode = null;
+// 		let assetScale = null;
+// 		let incomingSum = 0n;
+// 		let outgoingSum = 0n;
+
+// 		for (const d of snap.docs) {
+// 			const t = d.data();
+// 			if (!assetCode && t.assetCode) assetCode = t.assetCode;
+// 			if (!assetScale && t.assetScale !== undefined && t.assetScale !== null) assetScale = t.assetScale;
+// 			const v = t.amountRaw ? BigInt(t.amountRaw.toString()) : null;
+// 			if (v !== null) {
+// 				if (t.direction === 'incoming') incomingSum += v;
+// 				else outgoingSum += v;
+// 			}
+// 		}
+
+// 		const atomic = incomingSum - outgoingSum;
+// 		let human = null;
+// 		if (assetScale != null) {
+// 			try {
+// 				const scale = BigInt(10) ** BigInt(assetScale);
+// 				const intPart = atomic / scale;
+// 				const fracPart = (atomic < 0n ? -atomic : atomic) % scale;
+// 				const fracStr = fracPart.toString().padStart(Number(assetScale), '0');
+// 				human = `${intPart.toString()}.${fracStr}`;
+// 			} catch (err) {
+// 				human = atomic.toString();
+// 			}
+// 		} else {
+// 			human = atomic.toString();
+// 		}
+
+// 		return { asset: { assetCode, assetScale }, balanceHuman: human, balanceAtomic: atomic };
+// 	}
+
+// }
+
+// module.exports = Transactions;

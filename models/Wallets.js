@@ -1,5 +1,6 @@
 const { createAuthenticatedClient, OpenPaymentsClientError, isFinalizedGrant } = require('@interledger/open-payments');
 const path = require('path');
+const fs = require('fs');
 const User = require('./User');
 
 const readline = require('readline/promises');
@@ -22,10 +23,35 @@ class Wallet {
             throw new Error('User does not have a wallet address URL set');
         }
 
+        // Resolve async getters (they may return promises)
+        const walletAddressUrl = await User.getWalletAddress(userId);
+        const keyId = await User.getIlpKey(userId);
+        let privateKeyOrPath = await User.getIlpPrivateKeyPath(userId);
+
+        // If the user object already included the path, prefer it
+        if (!privateKeyOrPath && user.ilp_private_key_path) {
+          privateKeyOrPath = user.ilp_private_key_path;
+        }
+
+        // Resolve private key material: if it's a path, read the PEM contents
+        let privateKeyMaterial = privateKeyOrPath;
+        if (typeof privateKeyOrPath === 'string' && !privateKeyOrPath.includes('-----BEGIN')) {
+          try {
+            if (fs.existsSync(privateKeyOrPath)) {
+              privateKeyMaterial = fs.readFileSync(privateKeyOrPath, 'utf8');
+            } else {
+              // leave as-is; the client may accept paths or raw PEM
+              privateKeyMaterial = privateKeyOrPath;
+            }
+          } catch (err) {
+            console.error('Error reading ILP private key file:', err.message || err);
+          }
+        }
+
         const client = await createAuthenticatedClient({
-            walletAddressUrl: user.wallet_address_url,
-            keyId: user.ilp_key_id,
-            privateKey: user.ilp_private_key_path,
+            walletAddressUrl,
+            keyId,
+            privateKey: privateKeyMaterial,
         })
         return client;
     }
@@ -40,8 +66,7 @@ class Wallet {
         const client = await this.create(fromUserId);
 
         const SENDING_WALLET_ADDRESS_URL = await User.getWalletAddress(fromUserId)
-        // const RECEIVING_WALLET_ADDRESS_URL = toWalletAddressUrl
-        const RECEIVING_WALLET_ADDRESS_URL = 'https://ilp.interledger-test.dev/alice_chapulines'
+        const RECEIVING_WALLET_ADDRESS_URL = toWalletAddressUrl
         console.log(toWalletAddressUrl)
         
         const sendingWalletAddress = await client.walletAddress.get({
@@ -263,7 +288,7 @@ console.error('a')
   static async request(fromUserId, toWalletAddressUrl, amount){
         // Implementation for requesting money can go here
 
-        
+
     }
 
 

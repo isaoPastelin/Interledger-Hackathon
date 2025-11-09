@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 let Wallet;
-try { Wallet = require('../models/Wallet'); } catch (e) { console.warn('Wallet model unavailable', e.message); }
+try { Wallet = require('../models/Wallets'); } catch (e) { console.warn('Wallet model unavailable', e.message); }
 
 const { sendVerificationEmail, generateEmailVerificationToken } = require('../services/sendVerificationEmail');
 

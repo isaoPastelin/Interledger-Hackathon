@@ -2,5 +2,5 @@ node_modules/
 .env
 *.log
 .DS_Store
-database.db
 firebase_conn.json/
+.vscode/
