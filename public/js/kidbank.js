@@ -237,6 +237,76 @@ document.addEventListener('DOMContentLoaded', function() {
     console.log('All event listeners initialized!');
 });
 
+// Wallet Management
+function showAddWalletModal() {
+    document.getElementById('addWalletModal').classList.add('active');
+}
+
+function closeAddWalletModal() {
+    document.getElementById('addWalletModal').classList.remove('active');
+    document.getElementById('add-wallet-form').reset();
+    document.getElementById('wallet-message').innerHTML = '';
+}
+
+async function addWallet(event) {
+    event.preventDefault();
+    const form = event.target;
+    const messageDiv = document.getElementById('wallet-message');
+    
+    try {
+        const response = await fetch('/kidbank/add-wallet', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                name: form.wallet_name.value,
+                address: form.wallet_address.value
+            })
+        });
+
+        const data = await response.json();
+        
+        if (data.success) {
+            // Add the new wallet to the select options
+            const select = document.getElementById('to_user');
+            const option = document.createElement('option');
+            option.value = data.wallet.address;
+            option.textContent = `${data.wallet.name} (${data.wallet.address})`;
+            select.appendChild(option);
+            
+            // Close modal and show success message
+            closeAddWalletModal();
+            alert('Wallet added successfully! 🎉');
+        } else {
+            messageDiv.innerHTML = `<div class="error-message">${data.error || 'Failed to add wallet'}</div>`;
+        }
+    } catch (error) {
+        messageDiv.innerHTML = '<div class="error-message">Failed to add wallet. Please try again.</div>';
+        console.error('Add wallet error:', error);
+    }
+}
+
+// Initialize App with event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('KidBank app loaded! 🌟');
+    
+    // Add wallet form submit handler
+    const addWalletForm = document.getElementById('add-wallet-form');
+    if (addWalletForm) {
+        addWalletForm.addEventListener('submit', addWallet);
+    }
+    
+    // Add click handlers to investment options
+    document.querySelectorAll('.investment-option').forEach(option => {
+        option.addEventListener('click', function() {
+            selectInvestment(this);
+        });
+    });
+    
+    console.log('All event listeners initialized!');
+});
+
 // Export functions if using modules (optional)
 if (typeof module !== 'undefined' && module.exports) {
     module.exports = {
@@ -246,6 +316,9 @@ if (typeof module !== 'undefined' && module.exports) {
         sendMessage,
         addMoney,
         sendMoney,
-        addNewGoal
+        addNewGoal,
+        showAddWalletModal,
+        closeAddWalletModal,
+        addWallet
     };
 }

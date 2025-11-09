@@ -84,6 +84,51 @@ router.get('/', isAuthenticated, async (req, res) => {
 });
 
 // Handle KidBank transfers
+// Add new wallet
+router.post('/add-wallet', isAuthenticated, async (req, res) => {
+    try {
+        const user = await User.findById(req.session.userId);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        const { name, address } = req.body;
+        
+        if (!name || !address) {
+            return res.status(400).json({ error: 'Wallet name and address are required' });
+        }
+
+        // Validate the wallet address format for ILP addresses
+        try {
+            const url = new URL(address);
+            if (!url.protocol.startsWith('http') || !url.hostname.includes('interledger')) {
+                throw new Error('Not an Interledger URL');
+            }
+        } catch (error) {
+            return res.status(400).json({ error: 'Invalid wallet address format. Must be a valid Interledger URL (e.g., https://ilp.interledger-test.dev/...)' });
+        }
+
+        // Add the wallet to the user's wallet list
+        const wallet = {
+            name,
+            address,
+            added_at: new Date().toISOString()
+        };
+
+        // In a real application, you would store this in your database
+        // For now, we'll just return success
+        res.json({
+            success: true,
+            wallet,
+            message: 'Wallet added successfully'
+        });
+
+    } catch (error) {
+        console.error('Add wallet error:', error);
+        res.status(500).json({ error: 'Failed to add wallet' });
+    }
+});
+
 router.post('/transfer', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);

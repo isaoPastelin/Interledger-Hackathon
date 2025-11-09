@@ -83,6 +83,40 @@
             border-color: #8b5cf6;
         }
 
+        .form-help {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .wallet-input-group {
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+            margin-top: 0.5rem;
+        }
+
+        .wallet-input-group select {
+            flex: 1;
+        }
+
+        .wallet-input-group button {
+            padding: 0.75rem 1rem;
+            white-space: nowrap;
+            background-color: #8b5cf6;
+            color: white;
+            border: none;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: background-color 0.2s;
+        }
+
+        .wallet-input-group button:hover {
+            background-color: #7c3aed;
+        }
+
         .modal-buttons {
             display: flex;
             gap: 0.75rem;
@@ -599,14 +633,17 @@
 
                 <div class="form-group">
                     <label for="to_user">To Account:</label>
-                    <select id="to_user" name="to_user_id" required>
-                        <option value="<%= typeof user !== 'undefined' ? user.id : '' %>">My Account</option>
-                        <% if (typeof children !== 'undefined' && children) { 
-                            children.forEach(function(child) { %>
-                                <option value="<%= child.id %>"><%= child.full_name %></option>
-                            <% }); 
-                        } %>
-                    </select>
+                    <div class="wallet-input-group">
+                        <select id="to_user" name="to_user_id" required>
+                            <option value="<%= typeof user !== 'undefined' ? user.id : '' %>">My Account</option>
+                            <% if (typeof children !== 'undefined' && children) { 
+                                children.forEach(function(child) { %>
+                                    <option value="<%= child.id %>"><%= child.full_name %></option>
+                                <% }); 
+                            } %>
+                        </select>
+                        <button type="button" class="btn-secondary" onclick="showAddWalletModal()">+ New Wallet</button>
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -624,6 +661,40 @@
                 <div class="modal-buttons">
                     <button type="button" class="btn-cancel" onclick="closeTransferModal()">Cancel</button>
                     <button type="submit" class="btn-submit">Send Money 💸</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Add Wallet Modal -->
+    <div id="addWalletModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title">➕ Add New Wallet</h2>
+                <button class="modal-close" onclick="closeAddWalletModal()">✕</button>
+            </div>
+            
+            <form id="add-wallet-form">
+                <div class="form-group">
+                    <label for="wallet_name">Wallet Name:</label>
+                    <input type="text" id="wallet_name" name="wallet_name" placeholder="Enter a name for this wallet" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="wallet_address">Wallet Address:</label>
+                    <input type="text" id="wallet_address" name="wallet_address" 
+                           placeholder="https://ilp.interledger-test.dev/your-wallet-id" 
+                           pattern="https?://.*interledger.*"
+                           title="Must be a valid Interledger URL (e.g., https://ilp.interledger-test.dev/...)"
+                           required>
+                    <small class="form-help">Enter a valid Interledger URL (starts with https:// and contains interledger)</small>
+                </div>
+
+                <div id="wallet-message"></div>
+
+                <div class="modal-buttons">
+                    <button type="button" class="btn-cancel" onclick="closeAddWalletModal()">Cancel</button>
+                    <button type="submit" class="btn-submit">Add Wallet ➕</button>
                 </div>
             </form>
         </div>
