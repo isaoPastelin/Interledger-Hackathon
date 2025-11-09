@@ -7,7 +7,9 @@ const readline = require('readline/promises');
 const { db } = require('../db/firebase');
 const { FieldValue } = require('firebase-admin/firestore');
 const { send } = require('process');
+const { exec } = require('child_process');
 
+const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 class Wallet {
 
@@ -28,11 +30,6 @@ class Wallet {
         return client;
     }
 
-    static async getWalletAddress(userId){
-        const client = await this.create(userId);
-        return await client.walletAddress.get({ url: client.walletAddressUrl});
-    }
-
     /**
      * Orchestrate a payment from one user to another up to the interactive grant step.
      * Returns the interact URL and continuation data so the caller can approve the grant.
@@ -40,16 +37,11 @@ class Wallet {
     static async pay(fromUserId, toWalletAddressUrl, amount){
         if (amount <= 0) throw new Error('Amount must be positive');
         
-        console.log(await User.getIlpPrivateKeyPath(fromUserId))
-
-        const client = await createAuthenticatedClient({
-            walletAddressUrl: await User.getWalletAddress(fromUserId),
-            keyId: await User.getIlpKey(fromUserId),
-            privateKey: await User.getIlpPrivateKeyPath(fromUserId)
-        })
+        const client = await this.create(fromUserId);
 
         const SENDING_WALLET_ADDRESS_URL = await User.getWalletAddress(fromUserId)
-        const RECEIVING_WALLET_ADDRESS_URL = toWalletAddressUrl
+        // const RECEIVING_WALLET_ADDRESS_URL = toWalletAddressUrl
+        const RECEIVING_WALLET_ADDRESS_URL = 'https://ilp.interledger-test.dev/alice_chapulines'
         console.log(toWalletAddressUrl)
         
         const sendingWalletAddress = await client.walletAddress.get({
@@ -83,18 +75,7 @@ class Wallet {
     console.log('\nStep 2: got incoming payment grant on receiving wallet address', {
     incomingPaymentGrant
   })
-    console.log(incomingPaymentGrant.continue.access_token)
-    console.log(incomingPaymentGrant.access_token.access)
-
-    console.log("---")
-    console.log(receivingWalletAddress.resourceServer)
-    console.log(incomingPaymentGrant.continue.access_token.value)
-    console.log(receivingWalletAddress.id)
-    console.log(receivingWalletAddress.assetCode)
-    console.log(receivingWalletAddress.assetScale)
-
   
-
   // Step 3: Create the incoming payment. This will be where funds will be received.
 
     const incomingPayment = await client.incomingPayment.create(
@@ -107,7 +88,7 @@ class Wallet {
       incomingAmount: {
         assetCode: receivingWalletAddress.assetCode,
         assetScale: receivingWalletAddress.assetScale,
-        value: '1000'
+        value: amount.toString()
       },
       expiresAt: new Date(Date.now() + 60_000 * 10 ).toISOString() // 1 hour from now
     }
@@ -180,14 +161,15 @@ class Wallet {
         ]
       },
       interact: {
-        start: ['redirect']
+        start: ['redirect'],
+        //
         // finish: {
-        //   method: "redirect",
-        //   // This is where you can (optionally) redirect a user to after going through interaction.
-        //   // Keep in mind, you will need to parse the interact_ref in the resulting interaction URL,
-        //   // and pass it into the grant continuation request.
-        //   uri: "https://example.com",
-        //   nonce: crypto.randomUUID(),
+        // method: "redirect",
+        // //   // This is where you can (optionally) redirect a user to after going through interaction.
+        // //   // Keep in mind, you will need to parse the interact_ref in the resulting interaction URL,
+        // //   // and pass it into the grant continuation request.
+        //    uri: "http://localhost:3000/dashboard",
+        //    nonce: crypto.randomUUID(),
         // },
       }
     }
@@ -201,16 +183,37 @@ class Wallet {
     'Please navigate to the following URL, to accept the interaction from the sending wallet:'
   )
   console.log(outgoingPaymentGrant.interact.redirect)
+// open the interact URL in the default browser (acts like a popup)
+    const url = outgoingPaymentGrant.interact.redirect;
 
-  await readline
-    .createInterface({ input: process.stdin, output: process.stdout })
-    .question('\nPlease accept grant and press enter...')
+    const cmd =
+        process.platform === 'win32'
+            ? `start "" "${url}"`
+            : process.platform === 'darwin'
+            ? `open "${url}"`
+            : `xdg-open "${url}"`;
+
+    exec(cmd, (err) => {
+        if (err) {
+            console.error('Could not open browser. Please open this URL manually:', url);
+        } else {
+            console.log('Opened browser to approve grant:', url);
+        }
+    });
+
+    console.log('\nPlease accept grant in the browser. This script will automatically continue in 20 seconds...');
+
+  // Wait for 20,000 milliseconds
+  await wait(20000);
+
+  console.log('20-second wait complete. Continuing script...');
 
   let finalizedOutgoingPaymentGrant
 
   const grantContinuationErrorMessage =
     '\nThere was an error continuing the grant. You probably have not accepted the grant at the url (or it has already been used up, in which case, rerun the script).'
 
+console.error('a')
   try {
     finalizedOutgoingPaymentGrant = await client.grant.continue({
       url: outgoingPaymentGrant.continue.uri,
@@ -255,12 +258,8 @@ class Wallet {
     outgoingPayment
   )
 
-  process.exit()
+//   process.exit()
     }
-
-    
-
-
 
 }
 
