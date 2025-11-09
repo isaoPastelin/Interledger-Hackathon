@@ -23,37 +23,44 @@ class Wallet {
             throw new Error('User does not have a wallet address URL set');
         }
 
-        // Resolve async getters (they may return promises)
-        const walletAddressUrl = await User.getWalletAddress(userId);
-        const keyId = await User.getIlpKey(userId);
-        let privateKeyOrPath = await User.getIlpPrivateKeyPath(userId);
+    // Resolve async getters so we pass actual strings (not Promises) to the client
+    const walletAddressUrl = await User.getWalletAddress(userId);
+    if (!walletAddressUrl) throw new Error('User wallet address URL is empty');
+    const keyId = await User.getIlpKey(userId);
+    const privateKeyValue = await User.getIlpPrivateKeyPath(userId);
 
-        // If the user object already included the path, prefer it
-        if (!privateKeyOrPath && user.ilp_private_key_path) {
-          privateKeyOrPath = user.ilp_private_key_path;
+    // The stored value may be either the PEM content or a filesystem path to the PEM.
+    // If it's a path, read the file to obtain the PEM string before passing to the client.
+    let privateKeyMaterial = undefined;
+    if (privateKeyValue) {
+      if (typeof privateKeyValue !== 'string') {
+        // defensive: coerce to string
+        privateKeyValue = String(privateKeyValue);
+      }
+
+      if (privateKeyValue.includes('-----BEGIN')) {
+        // Looks like PEM content already
+        privateKeyMaterial = privateKeyValue;
+      } else {
+        // Treat as path. Resolve relative paths against project cwd.
+        const resolved = path.isAbsolute(privateKeyValue)
+          ? privateKeyValue
+          : path.join(process.cwd(), privateKeyValue);
+        try {
+          privateKeyMaterial = await fs.promises.readFile(resolved, 'utf8');
+        } catch (err) {
+          throw new Error(`Could not load private key at ${resolved}: ${err.message}`);
         }
+      }
+    }
 
-        // Resolve private key material: if it's a path, read the PEM contents
-        let privateKeyMaterial = privateKeyOrPath;
-        if (typeof privateKeyOrPath === 'string' && !privateKeyOrPath.includes('-----BEGIN')) {
-          try {
-            if (fs.existsSync(privateKeyOrPath)) {
-              privateKeyMaterial = fs.readFileSync(privateKeyOrPath, 'utf8');
-            } else {
-              // leave as-is; the client may accept paths or raw PEM
-              privateKeyMaterial = privateKeyOrPath;
-            }
-          } catch (err) {
-            console.error('Error reading ILP private key file:', err.message || err);
-          }
-        }
+    const client = await createAuthenticatedClient({
+      walletAddressUrl,
+      keyId,
+      privateKey: privateKeyMaterial,
+    });
 
-        const client = await createAuthenticatedClient({
-            walletAddressUrl,
-            keyId,
-            privateKey: privateKeyMaterial,
-        })
-        return client;
+    return client;
     }
 
     /**

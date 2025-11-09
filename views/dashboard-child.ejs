@@ -30,37 +30,34 @@
         <% } %>
       </div>
 
-      <!-- Transaction History -->
-      <div class="card">
-        <h2>Recent Transactions</h2>
-        <% if (transactions.length === 0) { %>
-          <p class="text-muted">No transactions yet.</p>
-        <% } else { %>
-          <div class="transactions-list">
-            <% transactions.forEach(tx => { %>
-              <div class="transaction-item">
-                <div class="transaction-info">
-                  <span class="transaction-type">
-                    <% if (tx.from_wallet_id === wallet.id) { %>
-                      Sent to User #<%= tx.to_user_id %>
-                    <% } else { %>
-                      Received from User #<%= tx.from_user_id %>
-                    <% } %>
-                  </span>
-                  <% if (tx.description) { %>
-                    <span class="transaction-desc"><%= tx.description %></span>
-                  <% } %>
-                </div>
-                <div class="transaction-amount <%= tx.from_wallet_id === wallet.id ? 'negative' : 'positive' %>">
-                  <%= tx.from_wallet_id === wallet.id ? '-' : '+' %>$<%= tx.amount.toFixed(2) %>
-                </div>
-                <div class="transaction-date">
-                  <%= new Date(tx.created_at).toLocaleString() %>
-                </div>
-              </div>
-            <% }); %>
+      <!-- Transactions Viewer -->
+      <div class="card" style="grid-column: 1 / -1;">
+        <h2>My Transactions & Balance</h2>
+        <div class="form-group">
+          <button id="sync-now-btn" class="btn btn-secondary" type="button">Sync Now</button>
+        </div>
+
+        <div class="balance-display">
+          <strong>Balance:</strong> <span id="user-balance">-</span>
+        </div>
+
+        <div class="transactions-grid">
+          <div class="transaction-section">
+            <h3>📥 Incoming Transactions</h3>
+            <table class="transactions-table">
+              <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="incoming-table-body"><tr><td colspan="4" style="text-align: center; color: #999;">Loading...</td></tr></tbody>
+            </table>
           </div>
-        <% } %>
+
+          <div class="transaction-section">
+            <h3>📤 Outgoing Transactions</h3>
+            <table class="transactions-table">
+              <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+              <tbody id="outgoing-table-body"><tr><td colspan="4" style="text-align: center; color: #999;">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
       </div>
 
       <!-- Information -->
@@ -71,5 +68,17 @@
       </div>
     </div>
   </div>
+
+  <script>
+    // Set current user ID for dashboard.js to use
+    window.currentUserId = '<%= user.id %>';
+  </script>
+  <script src="/js/dashboard.js"></script>
+  <script>
+    // Auto-load child's own transactions after dashboard.js loads
+    if (window.currentUserId && typeof loadUserData === 'function') {
+      loadUserData(window.currentUserId);
+    }
+  </script>
 </body>
 </html>
