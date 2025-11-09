@@ -143,6 +143,15 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.accountType = user.account_type;
 
+    // Trigger a background sync of transactions and balances for this user.
+    try {
+      const Transaction = require('../models/Transaction');
+      // fire-and-forget; don't block login. Log any errors.
+      Transaction.syncUser(user.id).catch(err => console.warn('Transaction sync failed on login for', user.id, err && err.message ? err.message : err));
+    } catch (e) {
+      console.warn('Transaction model unavailable for sync on login:', e && e.message ? e.message : e);
+    }
+
     res.redirect('/dashboard');
   } catch (error) {
     console.error('Login error:', error);

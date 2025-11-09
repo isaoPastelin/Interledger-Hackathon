@@ -7,6 +7,7 @@ const { db } = require('../db/firebase');
 const Transaction = require('../models/Transaction');
 
 
+
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
   if (req.session.userId) {
@@ -106,9 +107,9 @@ router.get('/', isAuthenticated, async (req, res) => {
   }
 });
 
-// Transfer money (for father accounts)
+// Transfer money
 router.post('/transfer', isAuthenticated, async (req, res) => {
-  // try {
+  try {
     const user = await User.findById(req.session.userId);
 
     if (user.account_type !== 'father') {
@@ -124,17 +125,12 @@ router.post('/transfer', isAuthenticated, async (req, res) => {
 
     const fromUser = await User.findById(from_user_id);
     const toUser = await User.findById(to_user_id);
-    
 
     if (!fromUser || !toUser) {
       return res.status(404).json({ error: 'User not found' });
     }
-    const toWallet = await User.getWalletAddress(to_user_id);
 
-    const fromWallet = await User.getWalletAddress(from_user_id);
-
-    await Wallet.pay(from_user_id, toWallet, transferAmount);
-
+    // Permission checks: make sure the logged-in father can operate on these users
     const canAccessFrom = fromUser.id === user.id || fromUser.parent_id === user.id;
     const canAccessTo = toUser.id === user.id || toUser.parent_id === user.id;
 
@@ -142,73 +138,101 @@ router.post('/transfer', isAuthenticated, async (req, res) => {
       return res.status(403).json({ error: 'You do not have permission to perform this transfer' });
     }
 
-    res.json({ success: true, message: 'Transfer completed successfully' });
+    // Resolve wallet addresses
+    const toWallet = await User.getWalletAddress(to_user_id);
+    const fromWallet = await User.getWalletAddress(from_user_id);
 
-    const {list: l_1, totalRecibido: b1} = await Transaction.get_incomingPayments(user.id);
-    const {list: l_2, totalEnviado: b2} = await Transaction.get_outgoingPayments(user.id);
-    console.log('Incoming Payments:', l_1, 'Balance:', b1);
-    console.log('Outgoing Payments:', l_2, 'Balance:', b2);
-    console.log('Total balance:', b1 - b2);
+    // Attempt the provider payment flow. If it succeeds, record local transfer in Firestore
+    try {
+      await Wallet.pay(from_user_id, toWallet, transferAmount);
+    } catch (err) {
+      console.error('Provider payment failed:', err && err.message ? err.message : err);
+      return res.status(500).json({ error: 'Provider payment failed: ' + (err && err.message ? err.message : String(err)) });
+    }
 
-  //   // Create ILP transaction (returns interactive grant URL if needed)
-  //   const result = await Transaction.create(fromUser.id, toUser.id, transferAmount, description);
+    // Determine asset information from cached balance if available
+    let assetCode = null;
+    let assetScale = 0;
+    try {
+      const cached = await Transaction.getCachedBalance(from_user_id);
+      if (cached && cached.asset) {
+        assetCode = cached.asset.assetCode || null;
+        assetScale = cached.asset.assetScale ?? 0;
+      }
+    } catch (e) {
+      // ignore and fallback to defaults
+    }
 
-  //   if (result.requiresInteraction) {
-  //     return res.json({ 
-  //       success: false,
-  //       requiresInteraction: true,
-  //       interactUrl: result.interactUrl,
-  //       transactionId: result.transactionId,
-  //       message: result.message
-  //     });
-  //   }
+    // Record the local transfer into Firestore and update balances
+    try {
+      const transferResult = await Transaction.recordLocalTransfer(from_user_id, to_user_id, transferAmount, { assetCode, assetScale, description });
+      console.log('Recorded local transfer:', transferResult);
+    } catch (err) {
+      console.warn('Failed to record local transfer in Firestore:', err && err.message ? err.message : err);
+      // don't fail the request because the provider payment succeeded; log and continue
+    }
 
-  //   res.json({ success: true, message: 'Transfer completed successfully' });
-  // } catch (error) {
-  //   console.error('Transfer error:', error);
-  //   res.status(500).json({ error: error.message });
-  // }
-
+    return res.json({ success: true, message: 'Transfer completed successfully' });
+  } catch (err) {
+    console.error('Transfer handler error:', err && err.message ? err.message : err);
+    return res.status(500).json({ error: 'Transfer failed: ' + (err && err.message ? err.message : String(err)) });
+  }
 });
 
-// // Return transactions (incoming + outgoing) and computed balance for the authenticated user
-// router.get('/transactions', isAuthenticated, async (req, res) => {
-//   // try {
-//   //   const userId = req.query.userId || req.session.userId;
-//   //   if (!userId) return res.status(400).json({ error: 'userId required' });
-
-//   //   const cursor = req.query.cursor;
-//   //   const limit = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
-
-//   //   const data = await Transaction.listAll(userId, { cursor, limit });
-//   //   const balance = await Transaction.getComputedBalance(userId);
-
-//   //   res.json({ incoming: data.incoming, outgoing: data.outgoing, balance });
-//   // } catch (err) {
-//   //   console.error('Transactions endpoint error:', err);
-//   //   res.status(500).json({ error: err.message });
-//   // }
-// });
-
-// // Debug route: fetch provider lists and persisted transactions for a given userId
-// router.get('/debug/transactions/:userId', isAuthenticated, async (req, res) => {
-//   // try {
-//   //   const userId = req.params.userId;
-//   //   if (!userId) return res.status(400).json({ error: 'userId required' });
-
-//   //   const provider = await Transaction.listAll(userId, { limit: req.query.limit ? parseInt(req.query.limit, 10) : 50 });
-//   //   const persistedSnap = await db.collection('transactions').where('userId', '==', userId).limit(200).get();
-//   //   const persisted = persistedSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-//   //   res.json({ provider, persistedCount: persisted.length, persisted });
-//   // } catch (err) {
-//   //   console.error('Debug transactions error:', err);
-//   //   res.status(500).json({ error: err.message });
-//   // }
-// });
-
-
-
-
 module.exports = router;
+
+// API: fetch transactions for a user (from persisted Firestore `transactions` collection)
+router.get('/api/user/:userId/transactions', isAuthenticated, async (req, res) => {
+  try {
+    const requester = await User.findById(req.session.userId);
+    if (!requester) return res.status(401).json({ error: 'Unauthorized' });
+
+    const userId = req.params.userId;
+    if (requester.id !== userId && requester.account_type !== 'father') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const direction = req.query.direction || 'all';
+    const limit = Math.min(parseInt(req.query.limit || '50', 10) || 50, 500);
+
+    let q = db.collection('transactions').where('userId', '==', userId).orderBy('updatedAt', 'desc').limit(limit);
+    if (direction === 'incoming') q = q.where('direction', '==', 'incoming');
+    else if (direction === 'outgoing') q = q.where('direction', '==', 'outgoing');
+
+    const snap = await q.get();
+    const items = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    res.json({ items });
+  } catch (err) {
+    console.error('API transactions error:', err && err.message ? err.message : err);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
+// API: fetch balance for a user (from balances/{userId} doc, fallback to cached aggregation)
+router.get('/api/user/:userId/balance', isAuthenticated, async (req, res) => {
+  try {
+    const requester = await User.findById(req.session.userId);
+    if (!requester) return res.status(401).json({ error: 'Unauthorized' });
+
+    const userId = req.params.userId;
+    if (requester.id !== userId && requester.account_type !== 'father') {
+      return res.status(403).json({ error: 'Forbidden' });
+    }
+
+    const snap = await db.collection('balances').doc(String(userId)).get();
+    if (snap.exists) return res.json({ balance: snap.data() });
+
+    // Fallback: compute cached aggregation from transactions
+    try {
+      const bal = await Transaction.getCachedBalance(userId);
+      return res.json({ balance: { asset: bal.asset, balanceHuman: bal.balanceHuman, balanceAtomic: bal.balanceAtomic } });
+    } catch (e) {
+      return res.status(404).json({ error: 'Balance not found' });
+    }
+  } catch (err) {
+    console.error('API balance error:', err && err.message ? err.message : err);
+    res.status(500).json({ error: 'Internal error' });
+  }
+});
+
 

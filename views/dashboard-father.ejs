@@ -49,6 +49,36 @@
         <% } %>
       </div>
 
+      <!-- User Transactions / Balance Viewer -->
+      <div class="card">
+        <h2>User Transactions & Balances</h2>
+        <div class="form-group">
+          <label for="user-view-select">Select user:</label>
+          <select id="user-view-select">
+            <option value="<%= user.id %>">Me - <%= user.full_name %></option>
+            <% children.forEach(child => { %>
+              <option value="<%= child.id %>"><%= child.full_name %> - <%= child.email %></option>
+            <% }); %>
+          </select>
+        </div>
+
+        <div class="balance-display">
+          <strong>Balance:</strong> <span id="user-balance">-</span>
+        </div>
+
+        <h3>Incoming</h3>
+        <table class="transactions-table">
+          <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="incoming-table-body"><tr><td colspan="4">Choose a user to load</td></tr></tbody>
+        </table>
+
+        <h3>Outgoing</h3>
+        <table class="transactions-table">
+          <thead><tr><th>Type</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead>
+          <tbody id="outgoing-table-body"><tr><td colspan="4">Choose a user to load</td></tr></tbody>
+        </table>
+      </div>
+
       <!-- Transfer Money -->
       <div class="card">
         <h2>Transfer Money</h2>
