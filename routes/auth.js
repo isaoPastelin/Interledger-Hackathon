@@ -6,7 +6,7 @@ const path = require('path');
 const fs = require('fs');
 
 let Wallet;
-try { Wallet = require('../models/Wallet'); } catch (e) { console.warn('Wallet model unavailable', e.message); }
+try { Wallet = require('../models/Wallets'); } catch (e) { console.warn('Wallet model unavailable', e.message); }
 
 const { sendVerificationEmail, generateEmailVerificationToken } = require('../services/sendVerificationEmail');
 
@@ -82,7 +82,9 @@ router.post('/register', upload.single('ilp_private_key'), async (req, res) => {
 
     if (Wallet && Wallet.create && resolvedWalletAddressUrl) {
       try {
-        await Wallet.create(userId, resolvedWalletAddressUrl);
+        // Avoid passing a walletAddressUrl to Wallet.create (Wallets.create expects userId)
+        // The call is non-critical during registration; if it fails we log a warning.
+        await Wallet.create(userId);
         await User.setWalletAddress(userId, resolvedWalletAddressUrl);
       } catch (walletErr) {
         console.warn('Wallet creation warning:', walletErr.message);
@@ -143,7 +145,8 @@ router.post('/login', async (req, res) => {
     req.session.userId = user.id;
     req.session.accountType = user.account_type;
 
-    res.redirect('/dashboard');
+    // Redirect directly to kidbank interface instead of dashboard
+    res.redirect('/kidbank');
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).render('login', { error: 'Login failed' });

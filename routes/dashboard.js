@@ -4,6 +4,78 @@ const User = require('../models/User');
 const Wallet = require('../models/Wallets');
 const ILP = require('../services/interledgerClient');
 
+// KidBank main interface
+router.get('/', isAuthenticated, async (req, res) => {
+  try {
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(404).send('User not found');
+    
+    const wallet = {
+      id: user.id,
+      wallet_address_url: user.wallet_address_url || null,
+      balance: 0,
+      ilpAvailable: !!(user.ilp_key_id && user.ilp_private_key_path)
+    };
+
+    const mockTransactions = [
+      {
+        id: "tx-1",
+        type: "deposit",
+        amount: 20.00,
+        description: "Weekly allowance",
+        created_at: new Date().toISOString()
+      },
+      {
+        id: "tx-2",
+        type: "reward",
+        amount: 5.00,
+        description: "Completed homework",
+        created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+      }
+    ];
+    
+    const dashboardData = {
+      userName: user.full_name || user.name || 'User',
+      wallet,
+      userStars: 245,
+      userBalance: wallet.balance.toFixed(2),
+      monthGain: 23.50,
+      transactions: mockTransactions,
+      savingsGoals: [
+        {
+          name: "New Video Game",
+          icon: "🎮",
+          color: "linear-gradient(135deg, #3b82f6, #06b6d4)",
+          saved: 45,
+          target: 60
+        }
+      ],
+      tasks: [
+        {
+          id: "task-1",
+          name: "Clean my room",
+          icon: "🏠",
+          color: "linear-gradient(135deg, #fbbf24, #f59e0b)",
+          reward: 5,
+          stars: 10,
+          completed: false
+        }
+      ],
+      investmentBalance: 85.75,
+      investmentEarnings: 5.75,
+      gameLevel: 12,
+      totalCoins: 1250,
+      achievementsUnlocked: 8,
+      dayStreak: 5
+    };
+
+    res.render('kidbank-dashboard', dashboardData);
+  } catch (error) {
+    console.error('KidBank error:', error);
+    res.status(500).send('Error loading KidBank: ' + error.message);
+  }
+});
+
 // Middleware to check if user is authenticated
 function isAuthenticated(req, res, next) {
   if (req.session.userId) {
@@ -17,30 +89,35 @@ router.get('/', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user) return res.status(404).send('User not found');
-    // Ensure we always pass a wallet object with a numeric balance to the views
-    let wallet = await Wallet.create(user.id)
-    if (!wallet) {
-      wallet = { id: null, wallet_address_url: null, balance: 0 };
-    } else {
-      const bal = await Wallet.getBalance(wallet.id);
-      wallet.balance = typeof bal === 'number' ? bal : 0;
-    }
+    // Build a lightweight wallet object from the user record for rendering.
+    // Do NOT attempt to create an authenticated ILP client here — that would try
+    // to load the private key and cause the OpenPaymentsClientError when the
+    // user doesn't have ILP credentials configured. Transfers still use
+    // Wallet.pay() which will create a client when needed.
+    const wallet = {
+      id: user.id,
+      wallet_address_url: user.wallet_address_url || null,
+      balance: 0,
+      ilpAvailable: !!(user.ilp_key_id && user.ilp_private_key_path)
+    };
 
-    // Use empty transactions array for now
+    // Use empty transactions array for rendering (we'll keep mock/real separation elsewhere)
     const transactions = [];
 
     if (user.account_type === 'father') {
       const children = await User.getChildren(user.id);
-      const childrenWithWallets = await Promise.all(children.map(async child => {
-        let childWallet = await Wallet.create(child.id)
-        if (!childWallet) {
-          childWallet = { id: null, wallet_address_url: null, balance: 0 };
-        } else {
-          const cb = await Wallet.getBalance(childWallet.id);
-          childWallet.balance = typeof cb === 'number' ? cb : 0;
-        }
-        return { ...child, wallet: childWallet };
-      }));
+      // Do not instantiate ILP clients for child wallets while rendering.
+      const childrenWithWallets = children.map(child => {
+        return {
+          ...child,
+          wallet: {
+            id: child.id,
+            wallet_address_url: child.wallet_address_url || null,
+            balance: child.wallet?.balance || 0,
+            ilpAvailable: !!(child.ilp_key_id && child.ilp_private_key_path)
+          }
+        };
+      });
 
       res.render('dashboard-father', {
         user,
@@ -120,7 +197,7 @@ router.post('/transfer', isAuthenticated, async (req, res) => {
 });
 
 // Handle KidBank transfers
-router.post('/kidbank/transfer', isAuthenticated, async (req, res) => {
+router.post('/transfer', isAuthenticated, async (req, res) => {
   try {
     const user = await User.findById(req.session.userId);
     if (!user || user.account_type !== 'child') {
@@ -168,13 +245,13 @@ router.get('/kidbank', isAuthenticated, async (req, res) => {
       return res.redirect('/dashboard');
     }
 
-    let wallet = await Wallet.create(user.id);
-    if (!wallet) {
-      wallet = { id: null, wallet_address_url: null, balance: 0 };
-    } else {
-      const bal = await Wallet.getBalance(wallet.id);
-      wallet.balance = typeof bal === 'number' ? bal : 0;
-    }
+    // Build lightweight wallet object for KidBank render (don't load ILP client here)
+    const wallet = {
+      id: user.id,
+      wallet_address_url: user.wallet_address_url || null,
+      balance: 0,
+      ilpAvailable: !!(user.ilp_key_id && user.ilp_private_key_path)
+    };
 
     // Use mock transactions instead of database queries
     const mockTransactions = [

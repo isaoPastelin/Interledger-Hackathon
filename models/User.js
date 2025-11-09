@@ -48,12 +48,25 @@ class User {
   }
 
   static async setIlpCredentials(userId, keyId, privateKeyPath) {
-    const updates = {};
-    if (keyId) updates.ilp_key_id = keyId;
-    if (privateKeyPath) updates.ilp_private_key_path = privateKeyPath;
-    if (Object.keys(updates).length) {
-      await this.collection().doc(userId).update(updates);
+    // Ensure secrets directory exists
+    const secretsDir = path.join(__dirname, '..', 'secrets');
+    if (!fs.existsSync(secretsDir)) {
+      fs.mkdirSync(secretsDir);
     }
+
+    // Generate a key file name based on userId if not provided
+    if (!privateKeyPath) {
+      const keyFileName = `private_${userId}.key`;
+      privateKeyPath = path.join(secretsDir, keyFileName);
+    }
+
+    const updates = {
+      ilp_key_id: keyId,
+      ilp_private_key_path: privateKeyPath
+    };
+
+    await this.collection().doc(userId).update(updates);
+    return updates;
   }
 
   static async verifyEmailByToken(token) {

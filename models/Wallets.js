@@ -18,14 +18,48 @@ class Wallet {
         if(!user){
             throw new Error('User not found');
         }
+
+        // Check wallet address
         if(!user.wallet_address_url){
-            throw new Error('User does not have a wallet address URL set');
+            throw new Error('User does not have a wallet address URL set. Please set wallet_address_url');
+        }
+
+        // Check ILP credentials
+        if(!user.ilp_key_id){
+            throw new Error('User does not have an ILP key ID set. Please set ilp_key_id');
+        }
+
+        if(!user.ilp_private_key_path){
+            throw new Error('User does not have an ILP private key path set. Please run User.setIlpCredentials()');
+        }
+
+        let privateKey;
+        try {
+            // Ensure the file exists
+            const fs = require('fs');
+            if (!fs.existsSync(user.ilp_private_key_path)) {
+                throw new Error(`Private key file not found: ${user.ilp_private_key_path}`);
+            }
+
+            // Try to read the private key from the file system
+            privateKey = await fs.promises.readFile(user.ilp_private_key_path, 'utf8');
+
+            // Validate key format
+            if (!privateKey.includes('BEGIN PRIVATE KEY') || !privateKey.includes('END PRIVATE KEY')) {
+                throw new Error('Invalid private key format. Must be a PEM formatted private key');
+            }
+        } catch (error) {
+            throw new OpenPaymentsClientError(
+                `Could not load private key for user ${userId}. ` +
+                `Error: ${error.message}. ` +
+                `Please check the private key at ${user.ilp_private_key_path} exists and is readable.`
+            );
         }
 
         const client = await createAuthenticatedClient({
             walletAddressUrl: user.wallet_address_url,
             keyId: user.ilp_key_id,
-            privateKey: user.ilp_private_key_path,
+            privateKey: privateKey, // Pass the actual key content instead of the path
         })
         return client;
     }
