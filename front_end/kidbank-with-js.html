@@ -1,0 +1,1795 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KidBank 🌟</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #a78bfa 0%, #f9a8d4 50%, #fde047 100%);
+            min-height: 100vh;
+            padding-bottom: 2rem;
+        }
+
+        /* Header Styles */
+        .header {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem 0;
+        }
+
+        .header-content {
+            max-width: 896px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+        }
+
+        .header-title h1 {
+            font-size: 1.5rem;
+            color: #6b21a8;
+            margin: 0;
+        }
+
+        .header-subtitle {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .stars-badge {
+            background: #facc15;
+            padding: 0.5rem 1rem;
+            border-radius: 9999px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 600;
+            color: #713f12;
+        }
+
+        /* Main Container */
+        .container {
+            max-width: 896px;
+            margin: 0 auto;
+            padding: 1.5rem 1rem;
+        }
+
+        /* Tabs Navigation */
+        .tabs-nav {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 0.5rem;
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn {
+            background: transparent;
+            border: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .tab-btn:hover {
+            background: rgba(0, 0, 0, 0.05);
+        }
+
+        .tab-btn.active {
+            color: white;
+        }
+
+        .tab-btn.active[data-tab="home"] { background: #a855f7; }
+        .tab-btn.active[data-tab="invest"] { background: #10b981; }
+        .tab-btn.active[data-tab="savings"] { background: #ec4899; }
+        .tab-btn.active[data-tab="tasks"] { background: #eab308; }
+        .tab-btn.active[data-tab="game"] { background: #3b82f6; }
+        .tab-btn.active[data-tab="history"] { background: #f97316; }
+
+        /* Tab Content */
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Card Styles */
+        .card {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Balance Card */
+        .balance-card {
+            background: linear-gradient(135deg, #9333ea, #ec4899);
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .balance-card::before,
+        .balance-card::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .balance-card::before {
+            width: 256px;
+            height: 256px;
+            top: -128px;
+            right: -128px;
+        }
+
+        .balance-card::after {
+            width: 192px;
+            height: 192px;
+            bottom: -96px;
+            left: -96px;
+        }
+
+        .balance-card-content {
+            position: relative;
+            z-index: 10;
+        }
+
+        .balance-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .balance-amount {
+            font-size: 2rem;
+            font-weight: bold;
+            margin: 0.5rem 0;
+        }
+
+        .balance-icon {
+            width: 64px;
+            height: 64px;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .balance-month {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 1rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .month-icon {
+            width: 40px;
+            height: 40px;
+            background: #4ade80;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .balance-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0.75rem;
+        }
+
+        .btn {
+            padding: 0.75rem 1.5rem;
+            border-radius: 8px;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: white;
+            color: #7c3aed;
+        }
+
+        .btn-primary:hover {
+            background: #f3e8ff;
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Investment Wallet */
+        .investment-visual {
+            background: linear-gradient(180deg, #7dd3fc 0%, #bef264 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            position: relative;
+            height: 200px;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+        }
+
+        .tree {
+            position: relative;
+        }
+
+        .tree-crown {
+            width: 80px;
+            height: 80px;
+            background: #22c55e;
+            border-radius: 50%;
+            margin: 0 auto;
+        }
+
+        .tree-trunk {
+            width: 20px;
+            height: 60px;
+            background: #92400e;
+            margin: 0 auto;
+        }
+
+        .tree-ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 60px;
+            background: #92400e;
+        }
+
+        .sun {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: #fbbf24;
+            border-radius: 50%;
+        }
+
+        .cloud {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 12px;
+            font-size: 0.875rem;
+            color: #374151;
+        }
+
+        .investment-balance {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .investment-earnings {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .earnings-icon {
+            width: 48px;
+            height: 48px;
+            background: #fbbf24;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        /* Investment Options */
+        .investment-option {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            border: 2px solid transparent;
+        }
+
+        .investment-option:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .investment-option.selected {
+            background: #dcfce7;
+            border-color: #22c55e;
+        }
+
+        .option-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .option-info {
+            flex: 1;
+        }
+
+        .option-name {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+        }
+
+        .option-desc {
+            font-size: 0.875rem;
+            color: #6b7280;
+        }
+
+        .option-details {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.25rem;
+        }
+
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-info {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-warning {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        /* Chart */
+        .chart {
+            padding: 1.5rem;
+            background: white;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        .chart-title {
+            font-size: 0.875rem;
+            color: #6b7280;
+            margin-bottom: 1rem;
+        }
+
+        .chart-bars {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-around;
+            height: 200px;
+            gap: 1rem;
+        }
+
+        .chart-bar {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .bar {
+            width: 100%;
+            background: linear-gradient(180deg, #6ee7b7, #10b981);
+            border-radius: 8px 8px 0 0;
+            transition: all 0.3s;
+        }
+
+        .bar:hover {
+            opacity: 0.8;
+        }
+
+        .bar-label {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
+        /* Savings Goals */
+        .goal-item {
+            margin-bottom: 1rem;
+        }
+
+        .goal-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .goal-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .goal-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #10b981, #059669);
+            border-radius: 9999px;
+            transition: width 0.3s;
+        }
+
+        /* Tasks */
+        .task-item {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+            border: 2px solid #fef3c7;
+        }
+
+        .task-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .task-item.completed {
+            background: #dcfce7;
+            border-color: #86efac;
+        }
+
+        .task-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .task-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .task-complete-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            border: none;
+            background: linear-gradient(135deg, #4ade80, #10b981);
+            color: white;
+            font-size: 1.25rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .task-complete-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .task-complete-btn.completed {
+            background: #22c55e;
+        }
+
+        /* Game Progress */
+        .game-stats {
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            color: white;
+            padding: 1.5rem;
+            border-radius: 16px;
+            margin-bottom: 1.5rem;
+        }
+
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .game-level {
+            font-size: 2rem;
+            font-weight: bold;
+        }
+
+        .game-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 0.75rem;
+            margin-top: 1rem;
+        }
+
+        .game-stat {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .level-item {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 1rem;
+            border: 2px solid #e9d5ff;
+            transition: all 0.2s;
+        }
+
+        .level-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .level-item.completed {
+            background: #dcfce7;
+            border-color: #86efac;
+        }
+
+        .level-item.locked {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            opacity: 0.6;
+        }
+
+        .level-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+
+        .level-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .level-number {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: white;
+        }
+
+        .level-right {
+            text-align: right;
+        }
+
+        .stars {
+            display: flex;
+            gap: 0.25rem;
+            margin-top: 0.25rem;
+        }
+
+        /* Achievements */
+        .achievements-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .achievement-item {
+            padding: 1rem;
+            border-radius: 12px;
+            border: 2px solid #fef3c7;
+            text-align: center;
+            transition: all 0.2s;
+        }
+
+        .achievement-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .achievement-item.unlocked {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-color: #fbbf24;
+        }
+
+        .achievement-item.locked {
+            background: #f3f4f6;
+            border-color: #d1d5db;
+            opacity: 0.5;
+        }
+
+        .achievement-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Transactions */
+        .transaction-item {
+            padding: 1rem;
+            border-radius: 12px;
+            margin-bottom: 0.75rem;
+            background: linear-gradient(90deg, white, #faf5ff);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            transition: all 0.2s;
+        }
+
+        .transaction-item:hover {
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .transaction-left {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .transaction-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+        }
+
+        .transaction-amount {
+            font-weight: 600;
+            font-size: 1.125rem;
+        }
+
+        .amount-positive {
+            color: #16a34a;
+        }
+
+        .amount-negative {
+            color: #ea580c;
+        }
+
+        /* Chatbot */
+        .chatbot-button {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 64px;
+            height: 64px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #a855f7, #ec4899);
+            border: none;
+            color: white;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            transition: all 0.2s;
+            z-index: 1000;
+        }
+
+        .chatbot-button:hover {
+            transform: scale(1.05);
+        }
+
+        .chatbot-window {
+            position: fixed;
+            bottom: 1.5rem;
+            right: 1.5rem;
+            width: 384px;
+            height: 600px;
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+            display: none;
+            flex-direction: column;
+            z-index: 1000;
+            border: 4px solid #c084fc;
+        }
+
+        .chatbot-window.open {
+            display: flex;
+        }
+
+        .chatbot-header {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            color: white;
+            padding: 1rem;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .chatbot-title {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .chatbot-avatar {
+            width: 40px;
+            height: 40px;
+            background: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+
+        .chatbot-close {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: white;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .chatbot-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .chatbot-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+        }
+
+        .message {
+            margin-bottom: 1rem;
+            display: flex;
+        }
+
+        .message.bot {
+            justify-content: flex-start;
+        }
+
+        .message.user {
+            justify-content: flex-end;
+        }
+
+        .message-bubble {
+            max-width: 80%;
+            padding: 0.75rem;
+            border-radius: 16px;
+        }
+
+        .message.bot .message-bubble {
+            background: linear-gradient(135deg, #faf5ff, #fce7f3);
+            color: #1f2937;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #3b82f6, #06b6d4);
+            color: white;
+        }
+
+        .chatbot-input-area {
+            padding: 1rem;
+            border-top: 2px solid #f3e8ff;
+            background: linear-gradient(90deg, #faf5ff, #fce7f3);
+        }
+
+        .chatbot-input {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .chatbot-input input {
+            flex: 1;
+            padding: 0.75rem;
+            border: 2px solid #e9d5ff;
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        .chatbot-send {
+            background: linear-gradient(90deg, #a855f7, #ec4899);
+            border: none;
+            color: white;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .chatbot-send:hover {
+            transform: scale(1.05);
+        }
+
+        /* Utility Classes */
+        .grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1.5rem;
+        }
+
+        .text-sm {
+            font-size: 0.875rem;
+        }
+
+        .text-xs {
+            font-size: 0.75rem;
+        }
+
+        .text-gray {
+            color: #6b7280;
+        }
+
+        .mb-4 {
+            margin-bottom: 1rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-2 {
+                grid-template-columns: 1fr;
+            }
+
+            .tabs-nav {
+                grid-template-columns: repeat(3, 1fr);
+            }
+
+            .chatbot-window {
+                width: calc(100% - 2rem);
+                right: 1rem;
+                left: 1rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">💰</div>
+                <div class="header-title">
+                    <h1>KidBank 🌟</h1>
+                    <p class="header-subtitle">Welcome back, Alex!</p>
+                </div>
+            </div>
+            <div class="stars-badge">
+                <span>⭐</span>
+                <span>245 Stars</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+                <span>🏠</span>
+                <span>Home</span>
+            </button>
+            <button class="tab-btn" data-tab="invest" onclick="switchTab('invest')">
+                <span>📈</span>
+                <span>Invest</span>
+            </button>
+            <button class="tab-btn" data-tab="savings" onclick="switchTab('savings')">
+                <span>🎯</span>
+                <span>Savings</span>
+            </button>
+            <button class="tab-btn" data-tab="tasks" onclick="switchTab('tasks')">
+                <span>🏆</span>
+                <span>Tasks</span>
+            </button>
+            <button class="tab-btn" data-tab="game" onclick="switchTab('game')">
+                <span>🎮</span>
+                <span>Game</span>
+            </button>
+            <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+                <span>🕐</span>
+                <span>History</span>
+            </button>
+        </div>
+
+        <!-- HOME TAB -->
+        <div id="home" class="tab-content active">
+            <!-- Balance Card -->
+            <div class="balance-card card">
+                <div class="balance-card-content">
+                    <div class="balance-header">
+                        <div>
+                            <p class="text-sm" style="color: #e9d5ff;">Your Total Balance</p>
+                            <div class="balance-amount">$127.50</div>
+                        </div>
+                        <div class="balance-icon">🐷</div>
+                    </div>
+
+                    <div class="balance-month">
+                        <div class="month-icon">📈</div>
+                        <div style="flex: 1;">
+                            <p class="text-sm">This Month</p>
+                            <p style="font-size: 1.125rem; font-weight: 600;">+$23.50 🎉</p>
+                        </div>
+                    </div>
+
+                    <div class="balance-buttons">
+                        <button class="btn btn-primary">Add Money</button>
+                        <button class="btn btn-secondary">Send Money</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Wallet Preview -->
+            <div class="card" style="border: 2px solid #d1fae5;">
+                <div class="card-title" style="color: #065f46;">
+                    <span>📈</span>
+                    Investment Wallet 🌱
+                </div>
+                <div class="investment-visual">
+                    <div class="cloud">🌱 Getting bigger!</div>
+                    <div class="sun"></div>
+                    <div class="tree-ground"></div>
+                    <div class="tree">
+                        <div class="tree-crown"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid: Savings Goals and Tasks -->
+            <div class="grid-2">
+                <!-- Savings Goals Preview -->
+                <div class="card" style="border: 2px solid #fce7f3;">
+                    <div class="card-title" style="color: #9f1239;">
+                        <span>🎯</span>
+                        My Savings Goals
+                    </div>
+                    <div class="goal-item">
+                        <div class="goal-header">
+                            <div class="goal-info">
+                                <div class="goal-icon" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">🎮</div>
+                                <div>
+                                    <p style="font-weight: 600;">New Video Game</p>
+                                    <p class="text-xs text-gray">$45 / $60</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray">75%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 75%;"></div>
+                        </div>
+                    </div>
+                    <div class="goal-item">
+                        <div class="goal-header">
+                            <div class="goal-info">
+                                <div class="goal-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🚲</div>
+                                <div>
+                                    <p style="font-weight: 600;">Cool Bike</p>
+                                    <p class="text-xs text-gray">$127.5 / $300</p>
+                                </div>
+                            </div>
+                            <span class="text-sm text-gray">43%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 43%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tasks & Rewards Preview -->
+                <div class="card" style="border: 2px solid #fef3c7;">
+                    <div class="card-title" style="color: #92400e;">
+                        <span>🏆</span>
+                        Tasks & Rewards
+                    </div>
+                    <div class="task-item" style="background: linear-gradient(90deg, white, #fef9c3);">
+                        <div class="task-left">
+                            <div class="task-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">🏠</div>
+                            <div>
+                                <p style="font-weight: 600;">Clean my room</p>
+                                <p class="text-xs text-gray"><span style="color: #16a34a;">$5</span> • ⭐ 10</p>
+                            </div>
+                        </div>
+                        <button class="task-complete-btn" onclick="completeTask(this)">✓</button>
+                    </div>
+                    <div class="task-item" style="background: linear-gradient(90deg, white, #dbeafe);">
+                        <div class="task-left">
+                            <div class="task-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">🍴</div>
+                            <div>
+                                <p style="font-weight: 600;">Help with dishes</p>
+                                <p class="text-xs text-gray"><span style="color: #16a34a;">$3</span> • ⭐ 5</p>
+                            </div>
+                        </div>
+                        <button class="task-complete-btn" onclick="completeTask(this)">✓</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Preview -->
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🕐</span>
+                    Recent Activity
+                </div>
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #22c55e; color: white;">🪙</div>
+                        <div>
+                            <p style="font-weight: 600;">Allowance 💰</p>
+                            <p class="text-xs text-gray">Today</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-positive">+$10.00</span>
+                        <span style="color: #16a34a; font-size: 1.25rem;">↓</span>
+                    </div>
+                </div>
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #3b82f6; color: white;">🎁</div>
+                        <div>
+                            <p style="font-weight: 600;">Completed chores</p>
+                            <p class="text-xs text-gray">Yesterday</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-positive">+$5.00</span>
+                        <span style="color: #16a34a; font-size: 1.25rem;">↓</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INVEST TAB -->
+        <div id="invest" class="tab-content">
+            <div class="card" style="border: 2px solid #d1fae5;">
+                <div class="card-title" style="color: #065f46;">
+                    <span>📈</span>
+                    Investment Wallet 🌱
+                </div>
+
+                <div class="investment-visual">
+                    <div class="cloud">🌱 Getting bigger!</div>
+                    <div class="sun"></div>
+                    <div class="tree-ground"></div>
+                    <div class="tree">
+                        <div class="tree-crown"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                </div>
+
+                <div class="investment-balance">
+                    <p class="text-sm" style="color: rgba(255,255,255,0.8);">Your Investment Balance</p>
+                    <h2 style="font-size: 2rem; margin: 0.5rem 0;">$85.75</h2>
+                    <div class="investment-earnings">
+                        <div class="earnings-icon">💰</div>
+                        <div>
+                            <p class="text-sm" style="color: rgba(255,255,255,0.9);">Total Earnings</p>
+                            <p style="font-weight: 600; font-size: 1.125rem;">+$5.75 🤑</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">Choose Your Investment 🎯</h3>
+
+                <div class="investment-option selected">
+                    <div class="option-icon" style="background: #10b981; color: white;">🌱</div>
+                    <div class="option-info">
+                        <div class="option-name">Safe Garden 🌱</div>
+                        <div class="option-desc">Slow and steady growth</div>
+                        <div class="option-details">
+                            <span class="badge badge-success">3% per month</span>
+                            <span class="badge badge-info">Very Low Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="investment-option">
+                    <div class="option-icon" style="background: #10b981; color: white;">🌳</div>
+                    <div class="option-info">
+                        <div class="option-name">Growing Tree 🌳</div>
+                        <div class="option-desc">Balanced growth and safety</div>
+                        <div class="option-details">
+                            <span class="badge badge-success">7% per month</span>
+                            <span class="badge badge-info">Low Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="investment-option">
+                    <div class="option-icon" style="background: #0891b2; color: white;">🎯</div>
+                    <div class="option-info">
+                        <div class="option-name">Magic Beanstalk 🎯</div>
+                        <div class="option-desc">Fast growth, more exciting!</div>
+                        <div class="option-details">
+                            <span class="badge badge-success">12% per month</span>
+                            <span class="badge badge-warning">Medium Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart">
+                    <div class="chart-title">Money Growth Over Time 📊</div>
+                    <div class="chart-bars">
+                        <div class="chart-bar">
+                            <div class="bar" style="height: 50%;"></div>
+                            <div class="bar-label">Jul</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar" style="height: 60%;"></div>
+                            <div class="bar-label">Aug</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar" style="height: 70%;"></div>
+                            <div class="bar-label">Sep</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar" style="height: 80%;"></div>
+                            <div class="bar-label">Oct</div>
+                        </div>
+                        <div class="chart-bar">
+                            <div class="bar" style="height: 100%;"></div>
+                            <div class="bar-label">Nov</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="background: #dbeafe; padding: 1rem; border-radius: 12px; margin-top: 1rem; display: flex; align-items: center; gap: 0.75rem;">
+                    <span style="font-size: 1.5rem;">💡</span>
+                    <p class="text-sm">Watch your money tree grow! The more you save and the longer you wait, the bigger your tree gets and the more money you earn! 💰🌳</p>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+                    <button class="btn" style="background: #10b981; color: white;">+ Add Money</button>
+                    <button class="btn" style="background: white; border: 2px solid #10b981; color: #10b981;">⊖ Withdraw</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVINGS TAB -->
+        <div id="savings" class="tab-content">
+            <div class="card" style="border: 2px solid #fce7f3;">
+                <div class="card-title" style="color: #9f1239;">
+                    <span>🎯</span>
+                    My Savings Goals
+                </div>
+
+                <div class="goal-item">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <div class="goal-icon" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">🎮</div>
+                            <div>
+                                <p style="font-weight: 600; font-size: 1.125rem;">New Video Game</p>
+                                <p class="text-sm text-gray">$45 / $60</p>
+                            </div>
+                        </div>
+                        <span style="font-weight: 600; color: #6b7280;">75%</span>
+                    </div>
+                    <div class="progress-bar" style="height: 10px;">
+                        <div class="progress-fill" style="width: 75%;"></div>
+                    </div>
+                </div>
+
+                <div class="goal-item">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <div class="goal-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🚲</div>
+                            <div>
+                                <p style="font-weight: 600; font-size: 1.125rem;">Cool Bike</p>
+                                <p class="text-sm text-gray">$127.5 / $300</p>
+                            </div>
+                        </div>
+                        <span style="font-weight: 600; color: #6b7280;">43%</span>
+                    </div>
+                    <div class="progress-bar" style="height: 10px;">
+                        <div class="progress-fill" style="width: 43%;"></div>
+                    </div>
+                </div>
+
+                <div class="goal-item">
+                    <div class="goal-header">
+                        <div class="goal-info">
+                            <div class="goal-icon" style="background: linear-gradient(135deg, #f97316, #dc2626);">📚</div>
+                            <div>
+                                <p style="font-weight: 600; font-size: 1.125rem;">Book Collection</p>
+                                <p class="text-sm text-gray">$18 / $50</p>
+                            </div>
+                        </div>
+                        <span style="font-weight: 600; color: #6b7280;">36%</span>
+                    </div>
+                    <div class="progress-bar" style="height: 10px;">
+                        <div class="progress-fill" style="width: 36%;"></div>
+                    </div>
+                </div>
+
+                <button class="btn" style="width: 100%; margin-top: 1rem; background: linear-gradient(90deg, #ec4899, #a855f7); color: white; font-size: 1.125rem;">
+                    + Add New Goal
+                </button>
+            </div>
+        </div>
+
+        <!-- TASKS TAB -->
+        <div id="tasks" class="tab-content">
+            <div class="card" style="border: 2px solid #fef3c7;">
+                <div class="card-title" style="color: #92400e;">
+                    <span>🏆</span>
+                    Tasks & Rewards
+                </div>
+
+                <div class="task-item" style="background: linear-gradient(90deg, white, #fef9c3);">
+                    <div class="task-left">
+                        <div class="task-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">🏠</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Clean my room</p>
+                            <p class="text-sm" style="color: #6b7280;">
+                                <span style="color: #16a34a; font-weight: 600;">$5</span> • ⭐ 10
+                            </p>
+                        </div>
+                    </div>
+                    <button class="task-complete-btn" onclick="completeTask(this)">✓</button>
+                </div>
+
+                <div class="task-item" style="background: linear-gradient(90deg, white, #dbeafe);">
+                    <div class="task-left">
+                        <div class="task-icon" style="background: linear-gradient(135deg, #3b82f6, #6366f1);">🍴</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Help with dishes</p>
+                            <p class="text-sm" style="color: #6b7280;">
+                                <span style="color: #16a34a; font-weight: 600;">$3</span> • ⭐ 5
+                            </p>
+                        </div>
+                    </div>
+                    <button class="task-complete-btn" onclick="completeTask(this)">✓</button>
+                </div>
+
+                <div class="task-item" style="background: linear-gradient(90deg, white, #fce7f3);">
+                    <div class="task-left">
+                        <div class="task-icon" style="background: linear-gradient(135deg, #ec4899, #a855f7);">✨</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Do homework</p>
+                            <p class="text-sm" style="color: #6b7280;">
+                                <span style="color: #16a34a; font-weight: 600;">$4</span> • ⭐ 8
+                            </p>
+                        </div>
+                    </div>
+                    <button class="task-complete-btn" onclick="completeTask(this)">✓</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- GAME TAB -->
+        <div id="game" class="tab-content">
+            <!-- Game Stats -->
+            <div class="game-stats">
+                <div class="game-header">
+                    <div>
+                        <p class="text-sm" style="color: #e9d5ff;">Your Game Level</p>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="game-level">Level 12</span>
+                            <span style="font-size: 2rem;">👑</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="text-sm" style="color: #e9d5ff;">Total Coins</p>
+                        <p style="font-size: 1.5rem; font-weight: 600;">1250 🪙</p>
+                    </div>
+                </div>
+
+                <div class="game-grid">
+                    <div class="game-stat">
+                        <div class="stat-icon">🏆</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Achievements</p>
+                        <p style="font-weight: 600;">8/20</p>
+                    </div>
+                    <div class="game-stat">
+                        <div class="stat-icon">⚡</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Day Streak</p>
+                        <p style="font-weight: 600;">5 days 🔥</p>
+                    </div>
+                    <div class="game-stat">
+                        <div class="stat-icon">⭐</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Stars</p>
+                        <p style="font-weight: 600;">245 ⭐</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Level Progress -->
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🎮</span>
+                    Level Progress 🎮
+                </div>
+
+                <div class="level-item completed">
+                    <div class="level-header">
+                        <div class="level-left">
+                            <div class="level-number" style="background: linear-gradient(135deg, #3b82f6, #1e40af);">1</div>
+                            <div>
+                                <p style="font-weight: 600;">Money Explorer 🗺️</p>
+                                <p class="text-xs text-gray">Learn the basics of saving</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <p class="text-sm" style="color: #eab308;">50 🪙</p>
+                            <div class="stars">
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #fbbf24;">⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">
+                            <span>Completed!</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="level-item completed">
+                    <div class="level-header">
+                        <div class="level-left">
+                            <div class="level-number" style="background: linear-gradient(135deg, #10b981, #059669);">2</div>
+                            <div>
+                                <p style="font-weight: 600;">Savings Champion 💪</p>
+                                <p class="text-xs text-gray">Save your first $20</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <p class="text-sm" style="color: #eab308;">75 🪙</p>
+                            <div class="stars">
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #fbbf24;">⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">
+                            <span>Completed!</span>
+                            <span>100%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 100%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="level-item">
+                    <div class="level-header">
+                        <div class="level-left">
+                            <div class="level-number" style="background: linear-gradient(135deg, #a855f7, #7c3aed);">3</div>
+                            <div>
+                                <p style="font-weight: 600;">Budget Master 📊</p>
+                                <p class="text-xs text-gray">Create and stick to a budget</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <p class="text-sm" style="color: #eab308;">100 🪙</p>
+                            <div class="stars">
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #fbbf24;">⭐</span>
+                                <span style="color: #d1d5db;">⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">
+                            <span>In Progress</span>
+                            <span>65%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 65%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="level-item">
+                    <div class="level-header">
+                        <div class="level-left">
+                            <div class="level-number" style="background: linear-gradient(135deg, #f97316, #ea580c);">4</div>
+                            <div>
+                                <p style="font-weight: 600;">Investment Hero 🌟</p>
+                                <p class="text-xs text-gray">Invest for the first time</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <p class="text-sm" style="color: #eab308;">150 🪙</p>
+                            <div class="stars">
+                                <span style="color: #d1d5db;">⭐</span>
+                                <span style="color: #d1d5db;">⭐</span>
+                                <span style="color: #d1d5db;">⭐</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 0.5rem;">
+                        <div style="display: flex; justify-content: space-between; font-size: 0.75rem; color: #6b7280; margin-bottom: 0.25rem;">
+                            <span>In Progress</span>
+                            <span>30%</span>
+                        </div>
+                        <div class="progress-bar">
+                            <div class="progress-fill" style="width: 30%;"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="level-item locked">
+                    <div class="level-header">
+                        <div class="level-left">
+                            <div class="level-number" style="background: #9ca3af;">🔒</div>
+                            <div>
+                                <p style="font-weight: 600;">Money Wizard 🧙‍♂️</p>
+                                <p class="text-xs text-gray">Complete all challenges</p>
+                            </div>
+                        </div>
+                        <div class="level-right">
+                            <p class="text-sm" style="color: #9ca3af;">200 🪙</p>
+                        </div>
+                    </div>
+                    <p class="text-xs" style="color: #6b7280; margin-top: 0.5rem;">🔒 Complete previous levels to unlock</p>
+                </div>
+            </div>
+
+            <!-- Achievements -->
+            <div class="card" style="border: 2px solid #fef3c7;">
+                <div class="card-title" style="color: #92400e;">
+                    <span>🏆</span>
+                    Achievements 🏆
+                </div>
+
+                <div class="achievements-grid">
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">💰</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">First Save</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">🔥</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Week Streak</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">🎯</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Goal Getter</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">🛒</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Smart Spender</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">✅</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Task Master</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">📈</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Investment Pro</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">🦸</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Helper Hero</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item unlocked">
+                        <div class="achievement-icon">🎓</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Money Expert</p>
+                        <span class="badge badge-success" style="margin-top: 0.5rem;">Unlocked!</span>
+                    </div>
+                    <div class="achievement-item locked">
+                        <div class="achievement-icon">⭐</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Super Saver</p>
+                        <span class="badge" style="margin-top: 0.5rem; border: 1px solid #d1d5db; color: #6b7280; background: transparent;">Locked</span>
+                    </div>
+                    <div class="achievement-item locked">
+                        <div class="achievement-icon">👑</div>
+                        <p style="font-size: 0.875rem; font-weight: 600;">Legend</p>
+                        <span class="badge" style="margin-top: 0.5rem; border: 1px solid #d1d5db; color: #6b7280; background: transparent;">Locked</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history" class="tab-content">
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🕐</span>
+                    Recent Activity
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #22c55e; color: white;">🪙</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Allowance 💰</p>
+                            <p class="text-sm text-gray">Today</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-positive">+$10.00</span>
+                        <span style="color: #16a34a; font-size: 1.5rem;">↓</span>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #3b82f6; color: white;">🎁</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Completed chores</p>
+                            <p class="text-sm text-gray">Yesterday</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-positive">+$5.00</span>
+                        <span style="color: #16a34a; font-size: 1.5rem;">↓</span>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #f97316; color: white;">🍦</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Ice cream treat</p>
+                            <p class="text-sm text-gray">2 days ago</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-negative">-$4.50</span>
+                        <span style="color: #ea580c; font-size: 1.5rem;">↑</span>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #a855f7; color: white;">🎁</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Birthday money</p>
+                            <p class="text-sm text-gray">Nov 5</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-positive">+$20.00</span>
+                        <span style="color: #16a34a; font-size: 1.5rem;">↓</span>
+                    </div>
+                </div>
+
+                <div class="transaction-item">
+                    <div class="transaction-left">
+                        <div class="transaction-icon" style="background: #f97316; color: white;">🍦</div>
+                        <div>
+                            <p style="font-weight: 600; font-size: 1.125rem;">Comic book</p>
+                            <p class="text-sm text-gray">Nov 3</p>
+                        </div>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 0.5rem;">
+                        <span class="transaction-amount amount-negative">-$7.00</span>
+                        <span style="color: #ea580c; font-size: 1.5rem;">↑</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Button -->
+    <button class="chatbot-button" onclick="toggleChatbot()">💬</button>
+
+    <!-- Chatbot Window -->
+    <div class="chatbot-window" id="chatbot">
+        <div class="chatbot-header">
+            <div class="chatbot-title">
+                <div class="chatbot-avatar">✨</div>
+                <div>
+                    <div style="font-weight: 600;">MoneyBot 🤖</div>
+                    <p style="font-size: 0.75rem; opacity: 0.9;">Your Money Helper</p>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()">✕</button>
+        </div>
+
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-bubble">
+                    Hi there! 👋 I'm MoneyBot, your friendly money helper! Ask me anything about saving, spending, or investing!
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-input-area">
+            <div class="chatbot-input">
+                <input type="text" id="chatInput" placeholder="Ask me anything! 💭" onkeypress="handleChatKeypress(event)">
+                <button class="chatbot-send" onclick="sendMessage()">➤</button>
+            </div>
+            <p class="text-xs text-gray" style="margin-top: 0.5rem; text-align: center;">
+                Try asking: "How do I save money?" 💡
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Tab Switching
+        function switchTab(tabName) {
+            // Hide all tab contents
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
+            });
+
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+
+            // Show selected tab content
+            document.getElementById(tabName).classList.add('active');
+
+            // Add active class to clicked button
+            document.querySelector(`[data-tab="${tabName}"]`).classList.add('active');
+        }
+
+        // Task Completion
+        function completeTask(button) {
+            const taskItem = button.closest('.task-item');
+            const taskText = taskItem.querySelector('p');
+            
+            taskItem.classList.add('completed');
+            button.classList.add('completed');
+            taskText.style.textDecoration = 'line-through';
+            
+            // Add celebration effect
+            button.innerHTML = '✓';
+            
+            setTimeout(() => {
+                alert('🎉 Great job! You earned money and stars!');
+            }, 300);
+        }
+
+        // Chatbot Functions
+        function toggleChatbot() {
+            const chatbot = document.getElementById('chatbot');
+            chatbot.classList.toggle('open');
+        }
+
+        function handleChatKeypress(event) {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        }
+
+
+    <!-- Link to external JavaScript file -->
+    <script src="kidbank.js"></script>
+</body>
+</html>

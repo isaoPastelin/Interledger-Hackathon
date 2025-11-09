@@ -7,6 +7,18 @@ class User {
     return db.collection('users');
   }
 
+  static async findById(userId) {
+    if (!userId) return null;
+    try {
+      const doc = await this.collection().doc(userId).get();
+      if (!doc.exists) return null;
+      return { id: doc.id, ...doc.data() };
+    } catch (error) {
+      console.error('Error finding user:', error);
+      return null;
+    }
+  }
+
   static async create(userData) {
     const hashedPassword = bcrypt.hashSync(userData.password, 10);
     const doc = {

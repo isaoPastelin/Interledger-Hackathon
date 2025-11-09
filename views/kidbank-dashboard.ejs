@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KidBank 🌟 - Dashboard</title>
+    <link rel="stylesheet" href="/css/kidbank.css">
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <div class="header-left">
+                <div class="header-icon">💰</div>
+                <div class="header-title">
+                    <h1>KidBank 🌟</h1>
+                    <p class="header-subtitle">Welcome back, <%- userName || 'Alex' %>!</p>
+                </div>
+            </div>
+            <div class="stars-badge">
+                <span>⭐</span>
+                <span><%- userStars || 245 %> Stars</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Tabs Navigation -->
+        <div class="tabs-nav">
+            <button class="tab-btn active" data-tab="home" onclick="switchTab('home')">
+                <span>🏠</span>
+                <span>Home</span>
+            </button>
+            <button class="tab-btn" data-tab="invest" onclick="switchTab('invest')">
+                <span>📈</span>
+                <span>Invest</span>
+            </button>
+            <button class="tab-btn" data-tab="savings" onclick="switchTab('savings')">
+                <span>🎯</span>
+                <span>Savings</span>
+            </button>
+            <button class="tab-btn" data-tab="tasks" onclick="switchTab('tasks')">
+                <span>🏆</span>
+                <span>Tasks</span>
+            </button>
+            <button class="tab-btn" data-tab="game" onclick="switchTab('game')">
+                <span>🎮</span>
+                <span>Game</span>
+            </button>
+            <button class="tab-btn" data-tab="history" onclick="switchTab('history')">
+                <span>🕐</span>
+                <span>History</span>
+            </button>
+        </div>
+
+        <!-- HOME TAB -->
+        <div id="home" class="tab-content active">
+            <!-- Balance Card -->
+            <div class="balance-card card">
+                <div class="balance-card-content">
+                    <div class="balance-header">
+                        <div>
+                            <p class="text-sm" style="color: #e9d5ff;">Your Total Balance</p>
+                            <div class="balance-amount">$<%- typeof userBalance !== 'undefined' ? userBalance : '127.50' %></div>
+                        </div>
+                        <div class="balance-icon">🐷</div>
+                    </div>
+
+                    <div class="balance-month">
+                        <div class="month-icon">📈</div>
+                        <div style="flex: 1;">
+                            <p class="text-sm">This Month</p>
+                            <p style="font-size: 1.125rem; font-weight: 600;">+$<%- typeof monthGain !== 'undefined' ? monthGain : '23.50' %> 🎉</p>
+                        </div>
+                    </div>
+
+                    <div class="balance-buttons">
+                        <button class="btn btn-primary" onclick="addMoney()">Add Money</button>
+                        <button class="btn btn-secondary" onclick="sendMoney()">Send Money</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investment Wallet Preview -->
+            <div class="card" style="border: 2px solid #d1fae5;">
+                <div class="card-title" style="color: #065f46;">
+                    <span>📈</span>
+                    Investment Wallet 🌱
+                </div>
+                <div class="investment-visual">
+                    <div class="cloud">🌱 Getting bigger!</div>
+                    <div class="sun"></div>
+                    <div class="tree-ground"></div>
+                    <div class="tree">
+                        <div class="tree-crown"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Grid: Savings Goals and Tasks -->
+            <div class="grid-2">
+                <!-- Savings Goals Preview -->
+                <div class="card" style="border: 2px solid #fce7f3;">
+                    <div class="card-title" style="color: #9f1239;">
+                        <span>🎯</span>
+                        My Savings Goals
+                    </div>
+                    
+                    <% if (typeof savingsGoals !== 'undefined' && savingsGoals && savingsGoals.length > 0) { 
+                        const displayGoals = savingsGoals.slice(0, 2);
+                        displayGoals.forEach(function(goal) { %>
+                            <div class="goal-item">
+                                <div class="goal-header">
+                                    <div class="goal-info">
+                                        <div class="goal-icon" style="background: <%- goal.color || 'linear-gradient(135deg, #3b82f6, #06b6d4)' %>;">
+                                            <%- goal.icon || '🎯' %>
+                                        </div>
+                                        <div>
+                                            <p style="font-weight: 600;"><%- goal.name %></p>
+                                            <p class="text-xs text-gray">$<%- goal.saved %> / $<%- goal.target %></p>
+                                        </div>
+                                    </div>
+                                    <span class="text-sm text-gray"><%- Math.round((goal.saved / goal.target) * 100) %>%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: <%- (goal.saved / goal.target) * 100 %>%;"></div>
+                                </div>
+                            </div>
+                        <% }); 
+                    } else { %>
+                        <!-- Default goals if no data from backend -->
+                        <div class="goal-item">
+                            <div class="goal-header">
+                                <div class="goal-info">
+                                    <div class="goal-icon" style="background: linear-gradient(135deg, #3b82f6, #06b6d4);">🎮</div>
+                                    <div>
+                                        <p style="font-weight: 600;">New Video Game</p>
+                                        <p class="text-xs text-gray">$45 / $60</p>
+                                    </div>
+                                </div>
+                                <span class="text-sm text-gray">75%</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: 75%;"></div>
+                            </div>
+                        </div>
+                    <% } %>
+                </div>
+
+                <!-- Tasks & Rewards Preview -->
+                <div class="card" style="border: 2px solid #fef3c7;">
+                    <div class="card-title" style="color: #92400e;">
+                        <span>🏆</span>
+                        Tasks & Rewards
+                    </div>
+                    
+                    <% if (typeof tasks !== 'undefined' && tasks && tasks.length > 0) { 
+                        const displayTasks = tasks.slice(0, 2);
+                        displayTasks.forEach(function(task) { %>
+                            <div class="task-item <%- task.completed ? 'completed' : '' %>" style="background: linear-gradient(90deg, white, #fef9c3);">
+                                <div class="task-left">
+                                    <div class="task-icon" style="background: <%- task.color || 'linear-gradient(135deg, #fbbf24, #f59e0b)' %>;">
+                                        <%- task.icon || '🏠' %>
+                                    </div>
+                                    <div>
+                                        <p style="font-weight: 600;"><%- task.name %></p>
+                                        <p class="text-xs text-gray">
+                                            <span style="color: #16a34a;">$<%- task.reward %></span> • ⭐ <%- task.stars %>
+                                        </p>
+                                    </div>
+                                </div>
+                                <button class="task-complete-btn <%- task.completed ? 'completed' : '' %>" 
+                                        onclick="completeTask(this, '<%- task.id %>')">✓</button>
+                            </div>
+                        <% }); 
+                    } else { %>
+                        <!-- Default tasks if no data from backend -->
+                        <div class="task-item" style="background: linear-gradient(90deg, white, #fef9c3);">
+                            <div class="task-left">
+                                <div class="task-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">🏠</div>
+                                <div>
+                                    <p style="font-weight: 600;">Clean my room</p>
+                                    <p class="text-xs text-gray"><span style="color: #16a34a;">$5</span> • ⭐ 10</p>
+                                </div>
+                            </div>
+                            <button class="task-complete-btn" onclick="completeTask(this, 'task-1')">✓</button>
+                        </div>
+                    <% } %>
+                </div>
+            </div>
+
+            <!-- Recent Transactions Preview -->
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🕐</span>
+                    Recent Activity
+                </div>
+                
+                <% if (typeof transactions !== 'undefined' && transactions && transactions.length > 0) { 
+                    const displayTransactions = transactions.slice(0, 2);
+                    displayTransactions.forEach(function(transaction) { %>
+                        <div class="transaction-item">
+                            <div class="transaction-left">
+                                <div class="transaction-icon" style="background: <%- transaction.iconBg || '#22c55e' %>; color: white;">
+                                    <%- transaction.icon || '🪙' %>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 600;"><%- transaction.name %></p>
+                                    <p class="text-xs text-gray"><%- transaction.date %></p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="transaction-amount <%- transaction.type === 'received' ? 'amount-positive' : 'amount-negative' %>">
+                                    <%- transaction.type === 'received' ? '+' : '-' %>$<%- transaction.amount %>
+                                </span>
+                                <span style="color: <%- transaction.type === 'received' ? '#16a34a' : '#ea580c' %>; font-size: 1.25rem;">
+                                    <%- transaction.type === 'received' ? '↓' : '↑' %>
+                                </span>
+                            </div>
+                        </div>
+                    <% }); 
+                } else { %>
+                    <!-- Default transactions if no data from backend -->
+                    <div class="transaction-item">
+                        <div class="transaction-left">
+                            <div class="transaction-icon" style="background: #22c55e; color: white;">🪙</div>
+                            <div>
+                                <p style="font-weight: 600;">Allowance 💰</p>
+                                <p class="text-xs text-gray">Today</p>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="transaction-amount amount-positive">+$10.00</span>
+                            <span style="color: #16a34a; font-size: 1.25rem;">↓</span>
+                        </div>
+                    </div>
+                <% } %>
+            </div>
+        </div>
+
+        <!-- INVEST TAB -->
+        <div id="invest" class="tab-content">
+            <div class="card" style="border: 2px solid #d1fae5;">
+                <div class="card-title" style="color: #065f46;">
+                    <span>📈</span>
+                    Investment Wallet 🌱
+                </div>
+
+                <div class="investment-visual">
+                    <div class="cloud">🌱 Getting bigger!</div>
+                    <div class="sun"></div>
+                    <div class="tree-ground"></div>
+                    <div class="tree">
+                        <div class="tree-crown"></div>
+                        <div class="tree-trunk"></div>
+                    </div>
+                </div>
+
+                <div class="investment-balance">
+                    <p class="text-sm" style="color: rgba(255,255,255,0.8);">Your Investment Balance</p>
+                    <h2 style="font-size: 2rem; margin: 0.5rem 0;">$<%- typeof investmentBalance !== 'undefined' ? investmentBalance : '85.75' %></h2>
+                    <div class="investment-earnings">
+                        <div class="earnings-icon">💰</div>
+                        <div>
+                            <p class="text-sm" style="color: rgba(255,255,255,0.9);">Total Earnings</p>
+                            <p style="font-weight: 600; font-size: 1.125rem;">+$<%- typeof investmentEarnings !== 'undefined' ? investmentEarnings : '5.75' %> 🤑</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 style="margin: 1.5rem 0 1rem; font-size: 1.125rem;">Choose Your Investment 🎯</h3>
+
+                <div class="investment-option selected">
+                    <div class="option-icon" style="background: #10b981; color: white;">🌱</div>
+                    <div class="option-info">
+                        <div class="option-name">Safe Garden 🌱</div>
+                        <div class="option-desc">Slow and steady growth</div>
+                        <div class="option-details">
+                            <span class="badge badge-success">3% per month</span>
+                            <span class="badge badge-info">Very Low Risk</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-top: 1rem;">
+                    <button class="btn" style="background: #10b981; color: white;" onclick="addInvestmentMoney()">+ Add Money</button>
+                    <button class="btn" style="background: white; border: 2px solid #10b981; color: #10b981;" onclick="withdrawInvestment()">⊖ Withdraw</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SAVINGS TAB -->
+        <div id="savings" class="tab-content">
+            <div class="card" style="border: 2px solid #fce7f3;">
+                <div class="card-title" style="color: #9f1239;">
+                    <span>🎯</span>
+                    My Savings Goals
+                </div>
+
+                <% if (typeof savingsGoals !== 'undefined' && savingsGoals && savingsGoals.length > 0) { 
+                    savingsGoals.forEach(function(goal) { %>
+                        <div class="goal-item">
+                            <div class="goal-header">
+                                <div class="goal-info">
+                                    <div class="goal-icon" style="background: <%- goal.color %>;">
+                                        <%- goal.icon %>
+                                    </div>
+                                    <div>
+                                        <p style="font-weight: 600; font-size: 1.125rem;"><%- goal.name %></p>
+                                        <p class="text-sm text-gray">$<%- goal.saved %> / $<%- goal.target %></p>
+                                    </div>
+                                </div>
+                                <span style="font-weight: 600; color: #6b7280;"><%- Math.round((goal.saved / goal.target) * 100) %>%</span>
+                            </div>
+                            <div class="progress-bar" style="height: 10px;">
+                                <div class="progress-fill" style="width: <%- (goal.saved / goal.target) * 100 %>%;"></div>
+                            </div>
+                        </div>
+                    <% }); 
+                } %>
+
+                <button class="btn" style="width: 100%; margin-top: 1rem; background: linear-gradient(90deg, #ec4899, #a855f7); color: white; font-size: 1.125rem;" onclick="addNewGoal()">
+                    + Add New Goal
+                </button>
+            </div>
+        </div>
+
+        <!-- TASKS TAB -->
+        <div id="tasks" class="tab-content">
+            <div class="card" style="border: 2px solid #fef3c7;">
+                <div class="card-title" style="color: #92400e;">
+                    <span>🏆</span>
+                    Tasks & Rewards
+                </div>
+
+                <% if (typeof tasks !== 'undefined' && tasks && tasks.length > 0) { 
+                    tasks.forEach(function(task) { %>
+                        <div class="task-item <%- task.completed ? 'completed' : '' %>" style="background: linear-gradient(90deg, white, #fef9c3);">
+                            <div class="task-left">
+                                <div class="task-icon" style="background: <%- task.color %>;">
+                                    <%- task.icon %>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 600; font-size: 1.125rem;"><%- task.name %></p>
+                                    <p class="text-sm" style="color: #6b7280;">
+                                        <span style="color: #16a34a; font-weight: 600;">$<%- task.reward %></span> • ⭐ <%- task.stars %>
+                                    </p>
+                                </div>
+                            </div>
+                            <button class="task-complete-btn <%- task.completed ? 'completed' : '' %>" 
+                                    onclick="completeTask(this, '<%- task.id %>')">✓</button>
+                        </div>
+                    <% }); 
+                } %>
+            </div>
+        </div>
+
+        <!-- GAME TAB -->
+        <div id="game" class="tab-content">
+            <div class="game-stats">
+                <div class="game-header">
+                    <div>
+                        <p class="text-sm" style="color: #e9d5ff;">Your Game Level</p>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span class="game-level">Level <%- typeof gameLevel !== 'undefined' ? gameLevel : 12 %></span>
+                            <span style="font-size: 2rem;">👑</span>
+                        </div>
+                    </div>
+                    <div style="text-align: right;">
+                        <p class="text-sm" style="color: #e9d5ff;">Total Coins</p>
+                        <p style="font-size: 1.5rem; font-weight: 600;"><%- typeof totalCoins !== 'undefined' ? totalCoins : 1250 %> 🪙</p>
+                    </div>
+                </div>
+
+                <div class="game-grid">
+                    <div class="game-stat">
+                        <div class="stat-icon">🏆</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Achievements</p>
+                        <p style="font-weight: 600;"><%- typeof achievementsUnlocked !== 'undefined' ? achievementsUnlocked : 8 %>/20</p>
+                    </div>
+                    <div class="game-stat">
+                        <div class="stat-icon">⚡</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Day Streak</p>
+                        <p style="font-weight: 600;"><%- typeof dayStreak !== 'undefined' ? dayStreak : 5 %> days 🔥</p>
+                    </div>
+                    <div class="game-stat">
+                        <div class="stat-icon">⭐</div>
+                        <p class="text-xs" style="color: #e9d5ff;">Stars</p>
+                        <p style="font-weight: 600;"><%- typeof userStars !== 'undefined' ? userStars : 245 %> ⭐</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🎮</span>
+                    Level Progress 🎮
+                </div>
+                <p>Your game levels will appear here from the backend data</p>
+            </div>
+        </div>
+
+        <!-- HISTORY TAB -->
+        <div id="history" class="tab-content">
+            <div class="card" style="border: 2px solid #e9d5ff;">
+                <div class="card-title" style="color: #6b21a8;">
+                    <span>🕐</span>
+                    Recent Activity
+                </div>
+
+                <% if (typeof transactions !== 'undefined' && transactions && transactions.length > 0) { 
+                    transactions.forEach(function(transaction) { %>
+                        <div class="transaction-item">
+                            <div class="transaction-left">
+                                <div class="transaction-icon" style="background: <%- transaction.iconBg %>; color: white;">
+                                    <%- transaction.icon %>
+                                </div>
+                                <div>
+                                    <p style="font-weight: 600; font-size: 1.125rem;"><%- transaction.name %></p>
+                                    <p class="text-sm text-gray"><%- transaction.date %></p>
+                                </div>
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span class="transaction-amount <%- transaction.type === 'received' ? 'amount-positive' : 'amount-negative' %>">
+                                    <%- transaction.type === 'received' ? '+' : '-' %>$<%- transaction.amount %>
+                                </span>
+                                <span style="color: <%- transaction.type === 'received' ? '#16a34a' : '#ea580c' %>; font-size: 1.5rem;">
+                                    <%- transaction.type === 'received' ? '↓' : '↑' %>
+                                </span>
+                            </div>
+                        </div>
+                    <% }); 
+                } %>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot -->
+    <button class="chatbot-button" onclick="toggleChatbot()">💬</button>
+
+    <div class="chatbot-window" id="chatbot">
+        <div class="chatbot-header">
+            <div class="chatbot-title">
+                <div class="chatbot-avatar">✨</div>
+                <div>
+                    <div style="font-weight: 600;">MoneyBot 🤖</div>
+                    <p style="font-size: 0.75rem; opacity: 0.9;">Your Money Helper</p>
+                </div>
+            </div>
+            <button class="chatbot-close" onclick="toggleChatbot()">✕</button>
+        </div>
+
+        <div class="chatbot-messages" id="chatMessages">
+            <div class="message bot">
+                <div class="message-bubble">
+                    Hi there! 👋 I'm MoneyBot, your friendly money helper! Ask me anything about saving, spending, or investing!
+                </div>
+            </div>
+        </div>
+
+        <div class="chatbot-input-area">
+            <div class="chatbot-input">
+                <input type="text" id="chatInput" placeholder="Ask me anything! 💭" onkeypress="handleChatKeypress(event)">
+                <button class="chatbot-send" onclick="sendMessage()">➤</button>
+            </div>
+            <p class="text-xs text-gray" style="margin-top: 0.5rem; text-align: center;">
+                Try asking: "How do I save money?" 💡
+            </p>
+        </div>
+    </div>
+
+    <script src="/js/kidbank.js"></script>
+    <script>
+        function completeTask(button, taskId) {
+            const taskItem = button.closest('.task-item');
+            const taskText = taskItem.querySelector('p');
+            
+            fetch('/dashboard/api/complete-task', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ taskId: taskId })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    taskItem.classList.add('completed');
+                    button.classList.add('completed');
+                    taskText.style.textDecoration = 'line-through';
+                    button.innerHTML = '✓';
+                    
+                    setTimeout(() => {
+                        alert('🎉 Great job! You earned $' + data.earnedMoney + ' and ' + data.earnedStars + ' stars!');
+                    }, 300);
+                }
+            })
+            .catch(error => console.error('Error:', error));
+        }
+
+        async function addMoney() {
+            const amount = prompt('How much money do you want to add?');
+            if (amount && !isNaN(amount) && amount > 0) {
+                try {
+                    const response = await fetch('/dashboard/api/add-money', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ 
+                            amount: amount,
+                            description: 'Added from KidBank'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.requiresInteraction) {
+                        alert('Waiting for parent approval! You will be redirected.');
+                        window.location.href = data.interactUrl;
+                    } else if (data.success) {
+                        alert('💰 ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to add money'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to add money. Please try again.');
+                }
+            }
+        }
+
+        async function sendMoney() {
+            const amount = prompt('How much money do you want to send?');
+            const toUserId = prompt('Enter the recipient\'s user ID:');
+            
+            if (amount && !isNaN(amount) && amount > 0 && toUserId) {
+                try {
+                    const response = await fetch('/dashboard/api/send-money', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            to_user_id: toUserId,
+                            amount: amount,
+                            description: 'Sent from KidBank'
+                        })
+                    });
+                    
+                    const data = await response.json();
+                    
+                    if (data.requiresInteraction) {
+                        alert('Waiting for parent approval! You will be redirected.');
+                        window.location.href = data.interactUrl;
+                    } else if (data.success) {
+                        alert('💸 ' + data.message);
+                        location.reload();
+                    } else {
+                        alert('Error: ' + (data.error || 'Failed to send money'));
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Failed to send money. Please try again.');
+                }
+            }
+        }
+
+        function addInvestmentMoney() {
+            alert('📈 Investment feature coming soon!');
+        }
+
+        function withdrawInvestment() {
+            alert('⊖ Withdraw investment - connect to your backend!');
+        }
+
+        function addNewGoal() {
+            alert('🎯 Add new goal - connect to your backend!');
+        }
+    </script>
+</body>
+</html>
