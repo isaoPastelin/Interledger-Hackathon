@@ -1,6 +1,5 @@
 const { db } = require('../db/firebase');
 const { FieldValue } = require('firebase-admin/firestore');
-const Wallet = require('./Wallet');
 const { createClientForCredentials } = require('../services/interledgerClient');
 const { isFinalizedGrant, OpenPaymentsClientError } = require('@interledger/open-payments');
 const User = require('./User');
